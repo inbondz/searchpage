@@ -1,1 +1,497 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inbondz Search</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <style>
+        /* 1. CORE DESIGN SYSTEM 
+           (Solid colors, no transparency/blur risks)
+        */
+        :root {
+            --brand: #9EA3A3;
+            --brand-dark: #7a7e7e;
+            
+            /* Light Theme */
+            --bg-body: #ffffff;
+            --bg-surface: #f4f6f8;
+            --bg-drawer: #ffffff;
+            --bg-modal: #ffffff;
+            --text-main: #1a1a1a;
+            --text-sub: #5f6368;
+            --border: #e0e0e0;
+            --shadow: 0 4px 12px rgba(0,0,0,0.15);
+            
+            /* Dimensions */
+            --header-h: 70px;
+            --menu-z: 10000; /* Maximum Layer */
+            --drawer-z: 9999;
+            --modal-z: 9000;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0a0a0a;
+            --bg-surface: #1a1a1a;
+            --bg-drawer: #121212;
+            --bg-modal: #121212;
+            --text-main: #ffffff;
+            --text-sub: #a0a0a0;
+            --border: #333333;
+            --shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            overflow-x: hidden;
+            display: flex; flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a { text-decoration: none; color: inherit; cursor: pointer; }
+        button, input { font-family: inherit; border: none; outline: none; background: none; }
+        
+        /* 2. THE MENU BUTTON (FIXED & SOLID)
+           Removed glass/blur. Now a solid FAB.
+        */
+        .fab-menu {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: var(--bg-drawer);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            box-shadow: var(--shadow);
+            z-index: var(--menu-z);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .fab-menu:active { transform: scale(0.95); }
+
+        .bar {
+            width: 24px;
+            height: 2px;
+            background-color: var(--text-main);
+            border-radius: 2px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Menu Open Animation (X) */
+        .fab-menu.active .bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .fab-menu.active .bar:nth-child(2) { opacity: 0; transform: translateX(-10px); }
+        .fab-menu.active .bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        /* 3. NAVIGATION DRAWER (SOLID PANEL)
+           No blur on backdrop to prevent rendering issues.
+        */
+        .drawer-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); /* Solid Dim */
+            z-index: 9998;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .drawer-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .drawer {
+            position: fixed; top: 0; right: 0; width: 300px; height: 100%;
+            background-color: var(--bg-drawer);
+            border-left: 1px solid var(--border);
+            z-index: var(--drawer-z);
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 90px 25px 30px; /* Top padding for menu button clearance */
+            display: flex; flex-direction: column;
+            overflow-y: auto;
+        }
+        .drawer.active { transform: translateX(0); }
+
+        .drawer-block { margin-bottom: 30px; }
+        .drawer-label {
+            font-size: 0.75rem; font-weight: 800; color: var(--brand);
+            text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px;
+        }
+        .drawer-link {
+            display: flex; align-items: center; gap: 15px;
+            padding: 12px 15px; margin-bottom: 5px;
+            border-radius: 8px;
+            color: var(--text-main); font-weight: 600; font-size: 1rem;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .drawer-link:hover { background-color: var(--bg-surface); }
+        .drawer-link i { width: 20px; text-align: center; color: var(--brand); }
+
+        /* 4. MAIN CONTENT & SEARCH
+        */
+        .header {
+            position: fixed; top: 0; left: 0; width: 100%; height: var(--header-h);
+            display: flex; align-items: center; padding-left: 25px;
+            z-index: 100; pointer-events: none; /* Let clicks pass */
+        }
+        .logo-small {
+            font-size: 1.2rem; font-weight: 800; color: var(--text-main);
+            display: flex; align-items: center; gap: 10px;
+            pointer-events: auto; opacity: 0; transform: translateY(-10px);
+            transition: 0.3s; cursor: pointer;
+        }
+        body.searched .logo-small { opacity: 1; transform: translateY(0); }
+
+        .hero {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; min-height: 80vh; transition: 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        body.searched .hero { justify-content: flex-start; align-items: flex-start; padding-top: 100px; min-height: auto; width: 100%; max-width: 850px; margin: 0 auto; }
+
+        .logo-big {
+            font-size: 4rem; font-weight: 900; letter-spacing: -2px;
+            color: var(--text-main); margin-bottom: 30px; transition: 0.3s;
+        }
+        body.searched .logo-big { font-size: 0; margin: 0; opacity: 0; height: 0; overflow: hidden; }
+
+        .search-wrap {
+            width: 100%; max-width: 600px; height: 54px;
+            background: var(--bg-drawer); border: 2px solid var(--border);
+            border-radius: 30px; display: flex; align-items: center; padding: 0 20px;
+            box-shadow: var(--shadow); transition: 0.2s;
+        }
+        .search-wrap:hover, .search-wrap:focus-within { border-color: var(--brand); transform: translateY(-1px); }
+        .search-input { flex: 1; height: 100%; font-size: 1.1rem; color: var(--text-main); margin-left: 10px; font-weight: 500; }
+
+        .hero-btns { margin-top: 30px; display: flex; gap: 10px; transition: 0.3s; opacity: 1; }
+        body.searched .hero-btns { display: none; opacity: 0; }
+        .btn { padding: 10px 24px; background: var(--bg-surface); color: var(--text-sub); border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn:hover { background: var(--border); color: var(--text-main); }
+
+        /* 5. RESULTS AREA
+        */
+        #results { width: 100%; display: none; padding-bottom: 100px; animation: slideUp 0.5s ease; }
+        body.searched #results { display: block; }
+        @keyframes slideUp { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
+
+        .tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--border); margin: 20px 0 30px; overflow-x: auto; padding-bottom: 5px; }
+        .tab { padding: 8px 0; font-size: 0.95rem; color: var(--text-sub); cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+        .tab.active { color: var(--brand); border-color: var(--brand); font-weight: 700; }
+
+        /* Card Style */
+        .card { margin-bottom: 20px; animation: fade 0.5s; max-width: 700px; }
+        @keyframes fade { from {opacity:0;} to {opacity:1;} }
+        
+        .card-head { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; margin-bottom: 5px; }
+        .card-icon { width: 24px; height: 24px; border-radius: 50%; background: var(--bg-surface); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-sub); }
+        .card-link { display: block; font-size: 1.3rem; color: #1a0dab; text-decoration: none; margin-bottom: 5px; font-weight: 400; }
+        [data-theme="dark"] .card-link { color: #8ab4f8; }
+        .card-link:hover { text-decoration: underline; }
+        .card-desc { font-size: 0.95rem; color: var(--text-sub); line-height: 1.6; }
+        .card-tools { display: flex; gap: 10px; margin-top: 10px; }
+        .tool { font-size: 0.8rem; padding: 4px 10px; background: var(--bg-surface); border-radius: 4px; cursor: pointer; color: var(--text-sub); font-weight: 600; }
+        .tool:hover { background: var(--border); color: var(--text-main); }
+
+        /* Deep Links Grid */
+        .matrix-box { margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); }
+        .m-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
+        .m-item { display: flex; align-items: center; gap: 10px; padding: 15px; background: var(--bg-drawer); border: 1px solid var(--border); border-radius: 12px; transition: 0.2s; }
+        .m-item:hover { transform: translateY(-3px); border-color: var(--brand); }
+
+        /* 6. FULL SCREEN PAGES (MODALS)
+           These sit above content but below the menu button.
+        */
+        .page {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body); z-index: var(--modal-z);
+            padding: 100px 20px 40px; overflow-y: auto;
+            opacity: 0; pointer-events: none; transform: scale(0.98);
+            transition: 0.3s ease;
+        }
+        .page.active { opacity: 1; pointer-events: auto; transform: scale(1); }
+
+        .page-content { max-width: 700px; margin: 0 auto; }
+        .page h2 { font-size: 2.5rem; color: var(--text-main); margin-bottom: 30px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+
+        /* Settings */
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--border); }
+        .toggle { position: relative; width: 50px; height: 28px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--border); transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background: var(--brand); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+    </style>
+</head>
+<body>
+
+    <button class="fab-menu" id="menuBtn" onclick="sys.toggleMenu()">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+    </button>
+
+    <div class="drawer-overlay" id="overlay" onclick="sys.toggleMenu()"></div>
+    <aside class="drawer" id="drawer">
+        <div class="drawer-block">
+            <div class="drawer-label">Navigate</div>
+            <div class="drawer-link" onclick="sys.go('home')"><i class="fa-solid fa-house"></i> Home</div>
+            <div class="drawer-link" onclick="sys.openPage('vault')"><i class="fa-solid fa-bookmark"></i> Vault (<span id="vaultBadge">0</span>)</div>
+            <div class="drawer-link" onclick="sys.openPage('history')"><i class="fa-solid fa-clock"></i> History</div>
+        </div>
+        <div class="drawer-block">
+            <div class="drawer-label">System</div>
+            <div class="drawer-link" onclick="sys.openPage('settings')"><i class="fa-solid fa-gear"></i> Settings</div>
+            <div class="drawer-link" onclick="sys.openPage('terms')"><i class="fa-solid fa-file"></i> Terms</div>
+            <div class="drawer-link" onclick="sys.openPage('contact')"><i class="fa-solid fa-user"></i> Contact</div>
+        </div>
+    </aside>
+
+    <header class="header">
+        <div class="logo-small" onclick="sys.go('home')"><i class="fa-solid fa-layer-group"></i> Inbondz</div>
+    </header>
+
+    <main class="hero">
+        <h1 class="logo-big">Inbondz</h1>
+        
+        <div class="search-wrap">
+            <i class="fa-solid fa-magnifying-glass" style="color:var(--text-sub)"></i>
+            <input type="text" id="input" placeholder="Search the web..." autocomplete="off">
+        </div>
+
+        <div class="hero-btns">
+            <button class="btn" onclick="core.search()">Inbondz Search</button>
+            <button class="btn" onclick="core.lucky()">I'm Feeling Lucky</button>
+        </div>
+
+        <div id="results">
+            <div class="tabs">
+                <div class="tab active" onclick="core.filter('all', this)">All</div>
+                <div class="tab" onclick="core.filter('images', this)">Images</div>
+                <div class="tab" onclick="core.filter('news', this)">News</div>
+                <div class="tab" onclick="core.filter('video', this)">Videos</div>
+                <div class="tab" onclick="core.filter('academic', this)">Academic</div>
+            </div>
+            
+            <div id="loader" style="display:none; text-align:center; padding:30px; color:var(--brand);">
+                <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i>
+            </div>
+
+            <div id="feed"></div>
+            
+            <div id="matrix" class="matrix-box" style="display:none;">
+                <h3 style="margin-bottom:20px;">DEEP WEB INDEX</h3>
+                <div class="m-grid" id="mGrid"></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="vault" class="page">
+        <div class="page-content">
+            <h2>Vault</h2>
+            <div id="vaultList"></div>
+            <button class="btn" style="margin-top:20px;" onclick="db.clearVault()">Clear Vault</button>
+        </div>
+    </div>
+
+    <div id="history" class="page">
+        <div class="page-content">
+            <h2>History</h2>
+            <canvas id="histChart" width="400" height="150" style="margin-bottom:30px;"></canvas>
+            <div id="histList"></div>
+            <button class="btn" style="margin-top:20px;" onclick="db.clearHist()">Clear History</button>
+        </div>
+    </div>
+
+    <div id="settings" class="page">
+        <div class="page-content">
+            <h2>Settings</h2>
+            <div class="row">
+                <div><h4>Dark Mode</h4><p class="text-muted">Toggle theme</p></div>
+                <label class="toggle"><input type="checkbox" id="themeSw" onchange="sys.themeToggle()"><span class="slider"></span></label>
+            </div>
+            <div class="row">
+                <div><h4>Reset Data</h4><p class="text-muted">Clear local storage</p></div>
+                <button class="btn" onclick="db.nuke()">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="contact" class="page">
+        <div class="page-content" style="text-align:center;">
+            <img src="https://unavatar.io/twitter/skwasimx" style="width:120px; height:120px; border-radius:50%; border:4px solid var(--brand); margin-bottom:20px;">
+            <h2>Sk Wasim</h2>
+            <p style="color:var(--text-sub);">Co-Founder & Architect</p>
+            <a href="https://wasim.inbondz.com" target="_blank" class="btn" style="background:var(--brand); color:white; margin-top:20px;">Profile</a>
+        </div>
+    </div>
+
+    <div id="terms" class="page"><div class="page-content"><h2>Terms</h2><p>Inbondz is an aggregator. We do not host content.</p></div></div>
+    <div id="privacy" class="page"><div class="page-content"><h2>Privacy</h2><p>Zero logs. Local storage only.</p></div></div>
+
+    <script>
+        // --- DATA ---
+        const db = {
+            get: k => JSON.parse(localStorage.getItem(k))||[],
+            set: (k,v) => localStorage.setItem(k, JSON.stringify(v)),
+            save: (t,l) => {
+                const v = db.get('ib_vault');
+                if(!v.some(x=>x.l===l)) { v.push({t,l,d:new Date().toLocaleDateString()}); db.set('ib_vault', v); sys.badge(); alert('Saved'); }
+            },
+            log: q => { const h=db.get('ib_hist'); h.unshift({q,d:new Date().toLocaleDateString()}); if(h.length>50)h.pop(); db.set('ib_hist', h); },
+            clearVault: () => { db.set('ib_vault',[]); sys.badge(); sys.renderVault(); },
+            clearHist: () => { db.set('ib_hist',[]); sys.renderHist(); },
+            nuke: () => { localStorage.clear(); location.reload(); }
+        };
+
+        // --- SYSTEM ---
+        const sys = {
+            init: () => {
+                sys.theme(); sys.badge();
+                document.getElementById('input').addEventListener('keypress', e=>{if(e.key==='Enter') core.search()});
+                document.addEventListener('keydown', e=>{if(e.key==='Escape') sys.go('home')});
+            },
+            toggleMenu: () => {
+                document.getElementById('menuBtn').classList.toggle('active');
+                document.getElementById('drawer').classList.toggle('active');
+                document.getElementById('overlay').classList.toggle('active');
+            },
+            go: (pg) => {
+                document.getElementById('menuBtn').classList.remove('active');
+                document.getElementById('drawer').classList.remove('active');
+                document.getElementById('overlay').classList.remove('active');
+                document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+                
+                if(pg === 'home') {
+                    // Stay on home, close everything
+                }
+            },
+            openPage: (id) => {
+                sys.go('home'); // Close others
+                document.getElementById(id).classList.add('active');
+                if(id==='vault') sys.renderVault();
+                if(id==='history') sys.renderHist();
+                // Close menu
+                document.getElementById('menuBtn').classList.remove('active');
+                document.getElementById('drawer').classList.remove('active');
+                document.getElementById('overlay').classList.remove('active');
+            },
+            theme: () => {
+                const d = localStorage.getItem('ib_theme');
+                if(d==='dark'||(!d && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.setAttribute('data-theme','dark'); document.getElementById('themeSw').checked=true;
+                }
+            },
+            themeToggle: () => {
+                const c = document.documentElement.getAttribute('data-theme');
+                const n = c==='dark'?'light':'dark';
+                document.documentElement.setAttribute('data-theme',n); localStorage.setItem('ib_theme',n);
+            },
+            badge: () => document.getElementById('vaultBadge').innerText = db.get('ib_vault').length,
+            renderVault: () => {
+                const v = db.get('ib_vault');
+                document.getElementById('vaultList').innerHTML = v.length ? v.map(i=>`<div class="card" style="border:1px solid var(--border); padding:15px;"><a href="${i.l}" target="_blank" class="card-link">${i.t}</a><div class="card-desc">Saved: ${i.d}</div></div>`).join('') : 'Empty';
+            },
+            renderHist: () => {
+                const h = db.get('ib_hist');
+                document.getElementById('histList').innerHTML = h.length ? h.map(i=>`<div class="drawer-link" onclick="sys.go('home'); document.getElementById('input').value='${i.q}'; core.search();">${i.q}</div>`).join('') : 'Empty';
+                new Chart(document.getElementById('histChart'),{type:'line',data:{labels:h.slice(0,5).map(x=>x.d),datasets:[{data:h.slice(0,5).map((_,i)=>i+1),borderColor:'#9EA3A3'}]},options:{plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false}}}});
+            }
+        };
+
+        // --- CORE ENGINE ---
+        const core = {
+            lastQ: '',
+            search: async () => {
+                const q = document.getElementById('input').value.trim();
+                if(!q) return;
+                core.lastQ = q; db.log(q);
+                document.body.classList.add('searched');
+                sys.go('home');
+                core.filter('all', document.querySelector('.tab'));
+            },
+            lucky: () => {
+                const t=['AI','Space','Crypto','History'];
+                document.getElementById('input').value=t[Math.floor(Math.random()*t.length)];
+                core.search();
+            },
+            filter: async (type, btn) => {
+                const q = core.lastQ; if(!q) return;
+                document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active');
+                
+                const feed = document.getElementById('feed');
+                const mat = document.getElementById('matrix');
+                const load = document.getElementById('loader');
+                
+                feed.innerHTML=''; mat.style.display='none'; load.style.display='block';
+
+                if(type === 'all') {
+                    await core.fetchLive(q);
+                    // Also show matrix
+                    mat.style.display='block';
+                    core.renderMatrix('general', q);
+                } else {
+                    // Category Link Logic (NO DUMMIES)
+                    core.renderDeepLinks(type, q);
+                }
+                load.style.display='none';
+            },
+            
+            fetchLive: async (q) => {
+                const add = (t,l,d,s) => {
+                    const dom = new URL(l).hostname.replace('www.','');
+                    const cT=t.replace(/'/g,""); const cL=l.replace(/'/g,"");
+                    document.getElementById('feed').innerHTML += `<div class="card"><div class="card-head"><div class="card-icon">${s[0]}</div><b>${s}</b> <span style="color:var(--text-sub)">• ${dom}</span></div><a href="${l}" target="_blank" class="card-link">${t}</a><div class="card-desc">${d}</div><div class="card-tools"><div class="tool" onclick="db.save('${cT}','${cL}')">Save</div></div></div>`;
+                };
+                const apis = [
+                    fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${q}&format=json&origin=*&limit=3`).then(r=>r.json()).then(d=>d.query.search.forEach(i=>add(i.title, `https://en.wikipedia.org/?curid=${i.pageid}`, i.snippet.replace(/<[^>]*>?/gm,'')+'...', 'Wikipedia'))),
+                    fetch(`https://openlibrary.org/search.json?q=${q}&limit=2`).then(r=>r.json()).then(d=>d.docs.forEach(i=>add(i.title, `https://openlibrary.org${i.key}`, `By ${i.author_name?.[0]||'Unknown'}.`, 'OpenLibrary'))),
+                    fetch(`https://itunes.apple.com/search?term=${q}&media=music&limit=2`).then(r=>r.json()).then(d=>d.results.forEach(i=>add(i.trackName, i.trackViewUrl, `${i.artistName}`, 'Apple Music')))
+                ];
+                await Promise.allSettled(apis);
+            },
+
+            renderDeepLinks: (cat, q) => {
+                const e = encodeURIComponent(q);
+                const dbs = {
+                    images: [{n:"Google Images",u:`https://www.google.com/search?tbm=isch&q=${e}`}, {n:"Unsplash",u:`https://unsplash.com/s/photos/${e}`}, {n:"Pinterest",u:`https://pinterest.com/search/pins/?q=${e}`}, {n:"Pexels",u:`https://pexels.com/search/${e}`}],
+                    news: [{n:"Google News",u:`https://news.google.com/search?q=${e}`}, {n:"Reuters",u:`https://reuters.com/search/news?blob=${e}`}, {n:"BBC",u:`https://bbc.co.uk/search?q=${e}`}],
+                    video: [{n:"YouTube",u:`https://youtube.com/results?search_query=${e}`}, {n:"Vimeo",u:`https://vimeo.com/search?q=${e}`}, {n:"Twitch",u:`https://twitch.tv/search?term=${e}`}],
+                    academic: [{n:"Scholar",u:`https://scholar.google.com/scholar?q=${e}`}, {n:"PubMed",u:`https://pubmed.ncbi.nlm.nih.gov/?term=${e}`}, {n:"JSTOR",u:`https://jstor.org/action/doBasicSearch?Query=${e}`}]
+                };
+                
+                const list = dbs[cat] || [];
+                let h = `<div style="margin-bottom:20px; color:var(--text-sub)">Direct links for <b>${cat.toUpperCase()}</b>:</div><div class="m-grid">`;
+                list.forEach(i => {
+                    h += `<a href="${i.u}" target="_blank" class="m-item"><div class="m-icon"><i class="fa-solid fa-arrow-right"></i></div><b>${i.n}</b></a>`;
+                });
+                h += `</div>`;
+                document.getElementById('feed').innerHTML = h;
+            },
+
+            renderMatrix: (type, q) => {
+                const e = encodeURIComponent(q);
+                const items = [
+                    {n:"Twitter",u:`https://twitter.com/search?q=${e}`}, {n:"Reddit",u:`https://reddit.com/search?q=${e}`},
+                    {n:"GitHub",u:`https://github.com/search?q=${e}`}, {n:"Instagram",u:`https://instagram.com/explore/tags/${q.replace(/\s/g,'')}`}
+                ];
+                let h = '';
+                items.forEach(i => h+=`<a href="${i.u}" target="_blank" class="m-item"><b>${i.n}</b></a>`);
+                document.getElementById('mGrid').innerHTML = h;
+            }
+        };
+
+        window.addEventListener('load', sys.init);
+    </script>
+</body>
+</html>
