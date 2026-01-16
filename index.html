@@ -1,1 +1,1392 @@
-yolll
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Inbondz Search - The Universal Research Engine">
+    <meta name="author" content="Sk Wasim">
+    <title>Inbondz Search</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* * ==========================================================================
+         * INBONDZ DESIGN SYSTEM (v5.0)
+         * ==========================================================================
+         * A comprehensive set of CSS variables controlling the entire
+         * visual language of the application. Supports hot-swapping
+         * between Light and Dark modes.
+         */
+
+        :root {
+            /* --- BRAND PALETTE --- */
+            /* The core identity color #9EA3A3 */
+            --brand-primary: #9EA3A3;
+            --brand-secondary: #7a7e7e;
+            --brand-tertiary: #b8bcbc;
+            --brand-surface: rgba(158, 163, 163, 0.12);
+            --brand-glow: 0 0 20px rgba(158, 163, 163, 0.3);
+
+            /* --- LIGHT THEME (Default) --- */
+            --bg-app: #ffffff;
+            --bg-panel: #f8f9fa;
+            --bg-card: #ffffff;
+            --bg-input: #ffffff;
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            --bg-overlay: rgba(255, 255, 255, 0.95);
+            
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --text-tertiary: #9aa0a6;
+            --text-inverse: #ffffff;
+            
+            --border-subtle: #f1f3f4;
+            --border-default: #dfe1e5;
+            --border-active: #9EA3A3;
+            
+            --shadow-1: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+            --shadow-2: 0 1px 6px 0 rgba(32,33,36,0.28);
+            --shadow-3: 0 4px 20px 0 rgba(32,33,36,0.15);
+            
+            --link-color: #1a0dab;
+            --link-visited: #609;
+
+            /* --- ANIMATION TIMINGS --- */
+            --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+            --ease-entrance: cubic-bezier(0.0, 0.0, 0.2, 1);
+            --ease-exit: cubic-bezier(0.4, 0.0, 1, 1);
+            --ease-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            
+            /* --- DIMENSIONS --- */
+            --header-height: 70px;
+            --sidebar-width: 320px;
+            --radius-s: 4px;
+            --radius-m: 8px;
+            --radius-l: 16px;
+            --radius-xl: 24px;
+            --radius-pill: 9999px;
+        }
+
+        /* --- DARK THEME OVERRIDES --- */
+        [data-theme="dark"] {
+            --bg-app: #171717;
+            --bg-panel: #202124;
+            --bg-card: #202124;
+            --bg-input: #303134;
+            --bg-glass: rgba(23, 23, 23, 0.85);
+            --bg-overlay: rgba(23, 23, 23, 0.95);
+            
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --text-tertiary: #5f6368;
+            
+            --border-subtle: #3c4043;
+            --border-default: #5f6368;
+            
+            --shadow-1: 0 1px 2px 0 rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15);
+            --shadow-2: 0 1px 6px 0 rgba(0,0,0,0.5);
+            --shadow-3: 0 4px 20px 0 rgba(0,0,0,0.6);
+            
+            --link-color: #8ab4f8;
+            --link-visited: #c58af9;
+        }
+
+        /* * ==========================================================================
+         * GLOBAL RESET & BASE TYPOGRAPHY
+         * ==========================================================================
+         */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-app);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        button, input {
+            font-family: inherit;
+            border: none;
+            outline: none;
+            background: none;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        ul, ol {
+            list-style: none;
+        }
+
+        /* * ==========================================================================
+         * COMPONENT: HEADER
+         * ==========================================================================
+         */
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 1000;
+            background: transparent;
+            transition: background-color 0.3s ease, border-bottom 0.3s ease;
+        }
+
+        .site-header.is-scrolled {
+            background-color: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        /* Logo shown in header only after searching */
+        .header-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: all 0.4s var(--ease-elastic);
+        }
+
+        .header-logo i {
+            color: var(--brand-primary);
+        }
+
+        /* State: Has Searched -> Show Header Logo */
+        body.has-searched .header-logo {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        /* * ==========================================================================
+         * COMPONENT: MENU TRIGGER (The 3-Line Button)
+         * ==========================================================================
+         */
+        .menu-toggle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background-color 0.2s ease;
+            z-index: 1200;
+        }
+
+        .menu-toggle:hover {
+            background-color: var(--bg-panel);
+        }
+
+        .menu-line {
+            width: 20px;
+            height: 2px;
+            background-color: var(--text-primary);
+            border-radius: 2px;
+            transition: transform 0.3s var(--ease-standard), opacity 0.3s ease;
+        }
+
+        /* Active State (The "X" Transformation) */
+        .menu-toggle.is-active .menu-line:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+        
+        .menu-toggle.is-active .menu-line:nth-child(2) {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        
+        .menu-toggle.is-active .menu-line:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
+
+        /* * ==========================================================================
+         * COMPONENT: HERO SEARCH AREA
+         * ==========================================================================
+         */
+        .hero-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            transition: all 0.6s var(--ease-standard);
+            min-height: 80vh; /* Takes full screen initially */
+        }
+
+        /* Transformation when search is active */
+        body.has-searched .hero-section {
+            min-height: auto;
+            flex: 0;
+            padding-top: calc(var(--header-height) + 20px);
+            align-items: flex-start; /* Move to left */
+            justify-content: flex-start;
+        }
+
+        /* The Big Logo */
+        .hero-brand {
+            font-size: 4rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            color: var(--text-primary);
+            margin-bottom: 30px;
+            text-align: center;
+            transition: all 0.4s ease;
+        }
+
+        body.has-searched .hero-brand {
+            font-size: 0;
+            margin-bottom: 0;
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        /* The Search Box Wrapper */
+        .search-container {
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .search-input-wrapper {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            height: 52px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-pill);
+            padding: 0 20px;
+            box-shadow: var(--shadow-1);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .search-input-wrapper:hover,
+        .search-input-wrapper:focus-within {
+            box-shadow: var(--shadow-2);
+            border-color: transparent;
+            transform: translateY(-1px);
+        }
+
+        .search-icon-left {
+            color: var(--text-tertiary);
+            font-size: 1.1rem;
+            margin-right: 16px;
+        }
+
+        #mainSearchInput {
+            flex: 1;
+            height: 100%;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Action Buttons (I'm Feeling Lucky) */
+        .hero-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        body.has-searched .hero-buttons {
+            display: none;
+            opacity: 0;
+        }
+
+        .btn-secondary {
+            padding: 0 20px;
+            height: 36px;
+            background-color: var(--bg-panel);
+            color: var(--text-secondary);
+            border: 1px solid transparent;
+            border-radius: var(--radius-m);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--border-default);
+            color: var(--text-primary);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* * ==========================================================================
+         * COMPONENT: SEARCH RESULTS
+         * ==========================================================================
+         */
+        #resultsWrapper {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px 100px;
+            display: none; /* Hidden by default */
+            animation: slideUpFade 0.6s var(--ease-standard);
+        }
+
+        body.has-searched #resultsWrapper {
+            display: block;
+        }
+
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 24px;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 24px;
+            margin-top: 10px;
+            overflow-x: auto;
+            padding-bottom: 1px;
+        }
+
+        .filter-tab {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            padding: 8px 0;
+            cursor: pointer;
+            position: relative;
+            white-space: nowrap;
+            transition: color 0.2s ease;
+        }
+
+        .filter-tab.active {
+            color: var(--brand-primary);
+            font-weight: 600;
+        }
+
+        .filter-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--brand-primary);
+            border-radius: 2px 2px 0 0;
+        }
+
+        /* Result Cards (The Google Style Snippets) */
+        .result-card {
+            margin-bottom: 24px;
+            max-width: 650px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .rc-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        .rc-icon-box {
+            width: 28px;
+            height: 28px;
+            background-color: var(--bg-panel);
+            border-radius: 50%;
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .rc-site-name {
+            font-weight: 600;
+        }
+
+        .rc-url {
+            color: var(--text-tertiary);
+            font-size: 0.8rem;
+        }
+
+        .rc-title {
+            display: block;
+            font-size: 1.3rem;
+            color: var(--link-color);
+            text-decoration: none;
+            line-height: 1.3;
+            margin-bottom: 4px;
+            font-weight: 400;
+        }
+
+        .rc-title:hover {
+            text-decoration: underline;
+        }
+
+        .rc-desc {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .rc-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .rc-action-btn {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .rc-action-btn:hover {
+            background-color: var(--bg-panel);
+            color: var(--text-primary);
+        }
+
+        /* * ==========================================================================
+         * COMPONENT: DEEP MATRIX (The Archive)
+         * ==========================================================================
+         */
+        .matrix-wrapper {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .matrix-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .matrix-title::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 20px;
+            background-color: var(--brand-primary);
+            border-radius: 2px;
+        }
+
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 32px;
+        }
+
+        .matrix-cat-header {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--brand-primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .matrix-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .matrix-link {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            transition: transform 0.2s ease, color 0.2s ease;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .matrix-link:hover {
+            color: var(--text-primary);
+            transform: translateX(4px);
+        }
+
+        /* * ==========================================================================
+         * COMPONENT: SIDE DRAWER
+         * ==========================================================================
+         */
+        .drawer-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-backdrop.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .drawer-panel {
+            position: fixed;
+            top: 0; right: 0; bottom: 0;
+            width: 300px;
+            background-color: var(--bg-card);
+            border-left: 1px solid var(--border-subtle);
+            box-shadow: -5px 0 30px rgba(0,0,0,0.15);
+            z-index: 1150;
+            transform: translateX(100%);
+            transition: transform 0.4s var(--ease-elastic);
+            padding: 80px 24px 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer-panel.is-open {
+            transform: translateX(0);
+        }
+
+        .drawer-section {
+            margin-bottom: 32px;
+        }
+
+        .drawer-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .drawer-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: var(--radius-m);
+            color: var(--text-primary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .drawer-item:hover {
+            background-color: var(--bg-panel);
+            color: var(--brand-primary);
+        }
+
+        .drawer-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .drawer-footer {
+            margin-top: auto;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-subtle);
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+        }
+
+        /* * ==========================================================================
+         * COMPONENT: MODALS (Pages)
+         * ==========================================================================
+         */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-app);
+            z-index: 1300;
+            padding: 100px 20px 40px;
+            overflow-y: auto;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.98);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .modal-overlay.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        .modal-content {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .modal-header {
+            margin-bottom: 40px;
+        }
+
+        .modal-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .modal-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Settings Rows */
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .setting-label h4 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .setting-label p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 32px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--border-default);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 24px;
+            width: 24px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .slider {
+            background-color: var(--brand-primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Profile Card */
+        .profile-card {
+            text-align: center;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            box-shadow: var(--shadow-2);
+        }
+
+        .profile-pic {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 4px solid var(--brand-primary);
+            padding: 4px;
+            object-fit: cover;
+            margin-bottom: 24px;
+        }
+
+        .profile-btn {
+            display: inline-block;
+            margin-top: 24px;
+            padding: 12px 32px;
+            background-color: var(--brand-primary);
+            color: #fff;
+            border-radius: var(--radius-pill);
+            font-weight: 700;
+            box-shadow: 0 4px 15px var(--brand-glow);
+            transition: transform 0.2s ease;
+        }
+
+        .profile-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* * ==========================================================================
+         * COMPONENT: TOAST NOTIFICATIONS
+         * ==========================================================================
+         */
+        .toast-wrapper {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 2500;
+            pointer-events: none;
+        }
+
+        .toast-msg {
+            background-color: var(--text-primary);
+            color: var(--bg-app);
+            padding: 12px 24px;
+            border-radius: var(--radius-pill);
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-3);
+            animation: toastEnter 0.4s var(--ease-elastic);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @keyframes toastEnter {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* * ==========================================================================
+         * COMPONENT: LOADING SKELETON
+         * ==========================================================================
+         */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-panel) 25%, var(--border-subtle) 50%, var(--bg-panel) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite linear;
+            border-radius: 4px;
+        }
+
+        .sk-line-sm { width: 40%; height: 14px; margin-bottom: 8px; }
+        .sk-line-md { width: 70%; height: 22px; margin-bottom: 8px; }
+        .sk-line-lg { width: 90%; height: 16px; margin-bottom: 4px; }
+        .sk-line-lg-2 { width: 60%; height: 16px; margin-bottom: 24px; }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* * ==========================================================================
+         * COMPONENT: HISTORY ITEM
+         * ==========================================================================
+         */
+        .history-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background-color: var(--bg-panel);
+            border-radius: var(--radius-m);
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .history-row:hover {
+            background-color: var(--border-subtle);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="toast-wrapper" id="toastContainer"></div>
+
+    <header class="site-header" id="siteHeader">
+        <div class="header-logo" onclick="app.goHome()">
+            <i class="fa-solid fa-layer-group"></i> Inbondz
+        </div>
+        
+        <button class="menu-toggle" id="menuBtn" onclick="app.toggleMenu()">
+            <span class="menu-line"></span>
+            <span class="menu-line"></span>
+            <span class="menu-line"></span>
+        </button>
+    </header>
+
+    <div class="drawer-backdrop" id="drawerOverlay" onclick="app.toggleMenu()"></div>
+    <aside class="drawer-panel" id="drawerPanel">
+        
+        <div class="drawer-section">
+            <div class="drawer-label">Navigation</div>
+            <div class="drawer-item" onclick="app.goHome()"><i class="fa-solid fa-house"></i> Home</div>
+            <div class="drawer-item" onclick="app.openModal('vaultModal')"><i class="fa-solid fa-bookmark"></i> Vault (<span id="vaultCounter">0</span>)</div>
+            <div class="drawer-item" onclick="app.openModal('historyModal')"><i class="fa-solid fa-clock-rotate-left"></i> History</div>
+        </div>
+
+        <div class="drawer-section">
+            <div class="drawer-label">System</div>
+            <div class="drawer-item" onclick="app.openModal('settingsModal')"><i class="fa-solid fa-sliders"></i> Settings</div>
+            <div class="drawer-item" onclick="app.openModal('termsModal')"><i class="fa-solid fa-file-contract"></i> Terms</div>
+            <div class="drawer-item" onclick="app.openModal('privacyModal')"><i class="fa-solid fa-shield-halved"></i> Privacy</div>
+            <div class="drawer-item" onclick="app.openModal('contactModal')"><i class="fa-solid fa-address-card"></i> Contact</div>
+        </div>
+
+        <div class="drawer-footer">
+            <p>Inbondz Search v5.0<br>Architect: Sk Wasim</p>
+        </div>
+    </aside>
+
+    <main class="hero-section" id="heroSection">
+        <h1 class="hero-brand">Inbondz</h1>
+        
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon-left"></i>
+                <input type="text" id="mainSearchInput" placeholder="Search the infinite web..." autocomplete="off">
+            </div>
+        </div>
+
+        <div class="hero-buttons">
+            <button class="btn-secondary" onclick="engine.initSearch()">Inbondz Search</button>
+            <button class="btn-secondary" onclick="engine.feelingLucky()">I'm Feeling Lucky</button>
+        </div>
+
+        <div id="resultsWrapper">
+            
+            <div class="filter-tabs">
+                <div class="filter-tab active">All</div>
+                <div class="filter-tab" onclick="app.notify('Images coming soon')">Images</div>
+                <div class="filter-tab" onclick="app.notify('News coming soon')">News</div>
+                <div class="filter-tab" onclick="app.notify('Videos coming soon')">Videos</div>
+                <div class="filter-tab" onclick="app.notify('Shopping coming soon')">Shopping</div>
+            </div>
+
+            <div id="resultLoader" style="display:none; padding-top:20px;">
+                <div style="margin-bottom:32px;">
+                    <div class="skeleton sk-line-sm"></div>
+                    <div class="skeleton sk-line-md"></div>
+                    <div class="skeleton sk-line-lg"></div>
+                    <div class="skeleton sk-line-lg-2"></div>
+                </div>
+                <div style="margin-bottom:32px;">
+                    <div class="skeleton sk-line-sm"></div>
+                    <div class="skeleton sk-line-md"></div>
+                    <div class="skeleton sk-line-lg"></div>
+                    <div class="skeleton sk-line-lg-2"></div>
+                </div>
+            </div>
+
+            <div id="liveFeed"></div>
+
+            <div class="matrix-wrapper" id="deepMatrixWrapper">
+                <div class="matrix-title">Deep Web Index (400+ Sources)</div>
+                <div class="matrix-grid" id="matrixGrid"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="vaultModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">My Vault</h2>
+                <p class="modal-subtitle">Your saved research bookmarks.</p>
+            </div>
+            <div id="vaultListContainer"></div>
+            <button class="btn-secondary" style="margin-top:30px;" onclick="dataManager.clearVault()">Clear Vault</button>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Search History</h2>
+                <p class="modal-subtitle">Your recent queries.</p>
+            </div>
+            <canvas id="historyChart" width="400" height="150" style="margin-bottom:30px;"></canvas>
+            <div id="historyListContainer"></div>
+            <button class="btn-secondary" style="margin-top:30px;" onclick="dataManager.clearHistory()">Clear History</button>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Settings</h2>
+                <p class="modal-subtitle">Customize your experience.</p>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">
+                    <h4>Appearance</h4>
+                    <p>Toggle Dark/Light Mode</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="themeSwitch" onchange="app.toggleTheme()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label">
+                    <h4>SafeSearch</h4>
+                    <p>Filter explicit results (Enforced)</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" checked disabled>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label">
+                    <h4>Data Management</h4>
+                    <p>Clear all local data from this device</p>
+                </div>
+                <button class="btn-secondary" onclick="dataManager.nuke()">Reset All</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="termsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Terms of Service</h2>
+                <p class="modal-subtitle">Last Updated: 2026</p>
+            </div>
+            <p style="margin-bottom:15px; color:var(--text-secondary);">
+                1. <strong>Federated Search:</strong> Inbondz Search is an aggregation tool. We query public APIs (Wikipedia, iTunes, OpenLibrary, etc.) and display the results here. We do not own the content.
+            </p>
+            <p style="margin-bottom:15px; color:var(--text-secondary);">
+                2. <strong>Deep Links:</strong> The "Deep Matrix" generates direct search URLs to external websites. We are not responsible for the content or privacy practices of those third-party sites.
+            </p>
+        </div>
+    </div>
+
+    <div id="privacyModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Privacy Policy</h2>
+            </div>
+            <p style="margin-bottom:15px; color:var(--text-secondary);">
+                <strong>Zero Knowledge:</strong> We do not track, store, or sell your search queries. All data processing happens directly in your browser.
+            </p>
+            <p style="margin-bottom:15px; color:var(--text-secondary);">
+                <strong>Local Storage:</strong> Your "Vault" and "History" are stored in your browser's LocalStorage. This data never leaves your device.
+            </p>
+        </div>
+    </div>
+
+    <div id="contactModal" class="modal-overlay">
+        <div class="modal-content profile-card">
+            <img src="https://unavatar.io/twitter/skwasimx" class="profile-pic" onerror="this.src='https://ui-avatars.com/api/?name=SW&background=9EA3A3&color=fff'">
+            <h2 class="modal-title" style="margin-bottom:8px;">Sk Wasim</h2>
+            <p class="modal-subtitle">Co-Founder & Lead Architect</p>
+            <a href="https://wasim.inbondz.com" target="_blank" class="profile-btn">Visit Profile</a>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * INBONDZ SEARCH ENGINE v5.0
+         * Modules: AppController, DataManager, Engine, UI
+         */
+
+        // --- 1. DATA MANAGER (LocalStorage) ---
+        const dataManager = {
+            get: (key) => JSON.parse(localStorage.getItem(key)) || [],
+            set: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
+            
+            saveToVault: (title, link) => {
+                const vault = dataManager.get('inbondz_vault');
+                if(!vault.some(i => i.link === link)) {
+                    vault.push({ title, link, date: new Date().toLocaleDateString() });
+                    dataManager.set('inbondz_vault', vault);
+                    app.updateVaultCount();
+                    app.notify('Saved to Vault');
+                } else {
+                    app.notify('Item already in Vault');
+                }
+            },
+
+            logHistory: (query) => {
+                const history = dataManager.get('inbondz_history');
+                history.unshift({ query, date: new Date().toLocaleDateString() });
+                if(history.length > 50) history.pop();
+                dataManager.set('inbondz_history', history);
+            },
+
+            clearVault: () => {
+                if(confirm('Delete all saved items?')) {
+                    dataManager.set('inbondz_vault', []);
+                    app.updateVaultCount();
+                    engine.renderVaultUI();
+                    app.notify('Vault Cleared');
+                }
+            },
+
+            clearHistory: () => {
+                if(confirm('Delete search history?')) {
+                    dataManager.set('inbondz_history', []);
+                    engine.renderHistoryUI();
+                    app.notify('History Cleared');
+                }
+            },
+
+            nuke: () => {
+                if(confirm('Factory Reset? This cannot be undone.')) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            }
+        };
+
+        // --- 2. APP CONTROLLER (UI State) ---
+        const app = {
+            init: () => {
+                app.detectTheme();
+                app.updateVaultCount();
+                
+                // Event Listeners
+                document.getElementById('mainSearchInput').addEventListener('keypress', (e) => {
+                    if(e.key === 'Enter') engine.initSearch();
+                });
+
+                window.addEventListener('scroll', () => {
+                    const header = document.getElementById('siteHeader');
+                    if(window.scrollY > 20) header.classList.add('is-scrolled');
+                    else header.classList.remove('is-scrolled');
+                });
+
+                // Close modal on Escape
+                document.addEventListener('keydown', (e) => {
+                    if(e.key === 'Escape') app.closeAll();
+                });
+            },
+
+            detectTheme: () => {
+                const saved = localStorage.getItem('inbondz_theme');
+                const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const toggle = document.getElementById('themeSwitch');
+                
+                if (saved === 'dark' || (!saved && sysDark)) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    toggle.checked = true;
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    toggle.checked = false;
+                }
+            },
+
+            toggleTheme: () => {
+                const current = document.documentElement.getAttribute('data-theme');
+                const target = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', target);
+                localStorage.setItem('inbondz_theme', target);
+                app.notify(`Theme set to ${target.toUpperCase()}`);
+            },
+
+            toggleMenu: () => {
+                document.getElementById('menuBtn').classList.toggle('is-active');
+                document.getElementById('drawerPanel').classList.toggle('is-open');
+                document.getElementById('drawerOverlay').classList.toggle('is-visible');
+            },
+
+            openModal: (id) => {
+                app.closeAll(); // Close menu/other modals first
+                document.getElementById(id).classList.add('is-visible');
+                
+                // Specific Renders
+                if(id === 'vaultModal') engine.renderVaultUI();
+                if(id === 'historyModal') engine.renderHistoryUI();
+            },
+
+            closeAll: () => {
+                // Close Menu
+                document.getElementById('menuBtn').classList.remove('is-active');
+                document.getElementById('drawerPanel').classList.remove('is-open');
+                document.getElementById('drawerOverlay').classList.remove('is-visible');
+                // Close Modals
+                document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('is-visible'));
+            },
+
+            goHome: () => {
+                app.closeAll();
+                document.body.classList.remove('has-searched');
+                document.getElementById('mainSearchInput').value = '';
+                document.getElementById('liveFeed').innerHTML = '';
+                document.getElementById('matrixGrid').innerHTML = '';
+            },
+
+            notify: (msg) => {
+                const box = document.createElement('div');
+                box.className = 'toast-msg';
+                box.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${msg}`;
+                document.getElementById('toastContainer').appendChild(box);
+                setTimeout(() => box.remove(), 3500);
+            },
+
+            updateVaultCount: () => {
+                const count = dataManager.get('inbondz_vault').length;
+                document.getElementById('vaultCounter').innerText = count;
+            },
+
+            copyCite: (text) => {
+                navigator.clipboard.writeText(text);
+                app.notify('Citation Copied');
+            }
+        };
+
+        // --- 3. SEARCH ENGINE CORE ---
+        const engine = {
+            initSearch: async (term) => {
+                const query = term || document.getElementById('mainSearchInput').value.trim();
+                if(!query) return;
+
+                // UI Transition
+                document.body.classList.add('has-searched');
+                app.closeAll();
+                
+                // Reset Results
+                const feed = document.getElementById('liveFeed');
+                const matrix = document.getElementById('matrixGrid');
+                const loader = document.getElementById('resultLoader');
+                
+                feed.innerHTML = '';
+                matrix.innerHTML = '';
+                loader.style.display = 'block';
+
+                dataManager.logHistory(query);
+
+                // Execute Live Fetch
+                await engine.fetchResults(query);
+                
+                // Generate Matrix
+                engine.renderMatrix(query);
+
+                loader.style.display = 'none';
+            },
+
+            feelingLucky: () => {
+                const topics = ['Mars Colonization', 'CRISPR Technology', 'Ancient Sumeria', 'Blockchain', 'Quantum Physics'];
+                const random = topics[Math.floor(Math.random() * topics.length)];
+                document.getElementById('mainSearchInput').value = random;
+                engine.initSearch(random);
+            },
+
+            // TIER 1: Live API Data
+            fetchResults: async (q) => {
+                const feed = document.getElementById('liveFeed');
+                
+                // Card Template Builder
+                const createCard = (title, link, desc, source, iconClass) => {
+                    const cleanLink = link.replace(/'/g, "");
+                    const cleanTitle = title.replace(/'/g, "");
+                    const domain = new URL(link).hostname.replace('www.', '');
+                    
+                    return `
+                        <div class="result-card">
+                            <div class="rc-meta">
+                                <div class="rc-icon-box"><i class="${iconClass}"></i></div>
+                                <span class="rc-site-name">${source}</span>
+                                <span class="rc-url">• ${domain}</span>
+                            </div>
+                            <a href="${link}" target="_blank" class="rc-title">${title}</a>
+                            <div class="rc-desc">${desc}</div>
+                            <div class="rc-actions">
+                                <div class="rc-action-btn" onclick="dataManager.saveToVault('${cleanTitle}', '${cleanLink}')">
+                                    <i class="fa-regular fa-bookmark"></i> Save
+                                </div>
+                                <div class="rc-action-btn" onclick="app.copyCite('${cleanTitle}. Retrieved from ${cleanLink}.')">
+                                    <i class="fa-solid fa-quote-right"></i> Cite
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                };
+
+                const apis = [
+                    // Wikipedia
+                    fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${q}&format=json&origin=*&limit=3`)
+                        .then(r=>r.json()).then(d=>d.query.search.forEach(i=>
+                            feed.innerHTML += createCard(i.title, `https://en.wikipedia.org/?curid=${i.pageid}`, i.snippet.replace(/<[^>]*>?/gm, '') + '...', 'Wikipedia', 'fa-brands fa-wikipedia-w'))),
+                    // OpenLibrary
+                    fetch(`https://openlibrary.org/search.json?q=${q}&limit=2`)
+                        .then(r=>r.json()).then(d=>d.docs.forEach(i=>
+                            feed.innerHTML += createCard(i.title, `https://openlibrary.org${i.key}`, `By ${i.author_name?.[0]||'Unknown'}. First published: ${i.first_publish_year||'N/A'}.`, 'OpenLibrary', 'fa-solid fa-book'))),
+                    // CoinGecko
+                    fetch(`https://api.coingecko.com/api/v3/search?query=${q}`)
+                        .then(r=>r.json()).then(d=>d.coins.slice(0,2).forEach(i=>
+                            feed.innerHTML += createCard(`${i.name} (${i.symbol})`, `https://www.coingecko.com/en/coins/${i.id}`, `Market Rank #${i.market_cap_rank}. Live cryptocurrency asset data.`, 'CoinGecko', 'fa-solid fa-coins'))),
+                    // iTunes
+                    fetch(`https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=2`)
+                        .then(r=>r.json()).then(d=>d.results.forEach(i=>
+                            feed.innerHTML += createCard(i.trackName, i.trackViewUrl, `Artist: ${i.artistName} • Album: ${i.collectionName}`, 'Apple Music', 'fa-brands fa-itunes-note')))
+                ];
+
+                await Promise.allSettled(apis);
+                
+                if(feed.innerHTML === '') {
+                    feed.innerHTML = `<div style="padding:20px; color:var(--text-secondary);">No live preview available. Check the Deep Matrix below.</div>`;
+                }
+            },
+
+            // TIER 2: Deep Matrix
+            renderMatrix: (q) => {
+                const e = encodeURIComponent(q);
+                const grid = document.getElementById('matrixGrid');
+                grid.innerHTML = '';
+
+                const data = {
+                    "Social": [
+                        {n:"X (Twitter)", u:`https://twitter.com/search?q=${e}`}, {n:"Instagram", u:`https://www.instagram.com/explore/tags/${q.replace(/\s/g,'')}/`},
+                        {n:"Facebook", u:`https://www.facebook.com/search/top?q=${e}`}, {n:"Reddit", u:`https://www.reddit.com/search/?q=${e}`},
+                        {n:"LinkedIn", u:`https://www.linkedin.com/search/results/all/?keywords=${e}`}, {n:"TikTok", u:`https://www.tiktok.com/search?q=${e}`},
+                        {n:"Quora", u:`https://www.quora.com/search?q=${e}`}, {n:"Pinterest", u:`https://www.pinterest.com/search/pins/?q=${e}`}
+                    ],
+                    "Academic": [
+                        {n:"Google Scholar", u:`https://scholar.google.com/scholar?q=${e}`}, {n:"PubMed", u:`https://pubmed.ncbi.nlm.nih.gov/?term=${e}`},
+                        {n:"JSTOR", u:`https://www.jstor.org/action/doBasicSearch?Query=${e}`}, {n:"ArXiv", u:`https://arxiv.org/search/?query=${e}`},
+                        {n:"ResearchGate", u:`https://www.researchgate.net/search?q=${e}`}, {n:"ScienceDirect", u:`https://www.sciencedirect.com/search?qs=${e}`},
+                        {n:"WorldCat", u:`https://www.worldcat.org/search?q=${e}`}, {n:"ERIC", u:`https://eric.ed.gov/?q=${e}`}
+                    ],
+                    "Technology": [
+                        {n:"GitHub", u:`https://github.com/search?q=${e}`}, {n:"Stack Overflow", u:`https://stackoverflow.com/search?q=${e}`},
+                        {n:"NPM", u:`https://www.npmjs.com/search?q=${e}`}, {n:"Docker Hub", u:`https://hub.docker.com/search?q=${e}`},
+                        {n:"PyPI", u:`https://pypi.org/search/?q=${e}`}, {n:"HackerNews", u:`https://hn.algolia.com/?q=${e}`}
+                    ],
+                    "Media": [
+                        {n:"YouTube", u:`https://www.youtube.com/results?search_query=${e}`}, {n:"Vimeo", u:`https://vimeo.com/search?q=${e}`},
+                        {n:"Spotify", u:`https://open.spotify.com/search/${e}`}, {n:"SoundCloud", u:`https://soundcloud.com/search?q=${e}`},
+                        {n:"Twitch", u:`https://www.twitch.tv/search?term=${e}`}, {n:"Unsplash", u:`https://unsplash.com/s/photos/${e}`}
+                    ]
+                };
+
+                for (const [cat, links] of Object.entries(data)) {
+                    let html = `<div class="matrix-list"><div class="matrix-cat-header">${cat}</div>`;
+                    links.forEach(l => {
+                        html += `<a href="${l.u}" target="_blank" class="matrix-link">${l.n}</a>`;
+                    });
+                    html += `</div>`;
+                    grid.innerHTML += html;
+                }
+            },
+
+            // Helper Renders
+            renderVaultUI: () => {
+                const v = dataManager.get('inbondz_vault');
+                const el = document.getElementById('vaultListContainer');
+                if(v.length === 0) {
+                    el.innerHTML = '<p style="color:var(--text-secondary)">Vault is empty.</p>';
+                    return;
+                }
+                el.innerHTML = '';
+                v.forEach(i => {
+                    el.innerHTML += `<div class="result-card"><a href="${i.link}" target="_blank" class="rc-title">${i.title}</a><div class="rc-desc">Saved on ${i.date}</div></div>`;
+                });
+            },
+
+            renderHistoryUI: () => {
+                const h = dataManager.get('inbondz_history');
+                const el = document.getElementById('historyListContainer');
+                if(h.length === 0) {
+                    el.innerHTML = '<p style="color:var(--text-secondary)">No history.</p>';
+                    return;
+                }
+                el.innerHTML = '';
+                h.forEach(i => {
+                    el.innerHTML += `<div class="history-row" onclick="app.closeAll(); document.getElementById('mainSearchInput').value='${i.query}'; engine.initSearch();"><span>${i.query}</span><span style="font-size:0.8rem; color:var(--text-tertiary);">${i.date}</span></div>`;
+                });
+
+                // Chart
+                const ctx = document.getElementById('historyChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: h.slice(0, 7).map(x => x.date).reverse(),
+                        datasets: [{
+                            label: 'Activity',
+                            data: h.slice(0, 7).map((_, i) => i + 1),
+                            borderColor: '#9EA3A3',
+                            tension: 0.4,
+                            fill: false
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } }
+                });
+            }
+        };
+
+        // --- 4. START ---
+        window.addEventListener('load', app.init);
+
+    </script>
+</body>
+</html>
