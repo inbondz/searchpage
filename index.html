@@ -1,1 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inbondz Search</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <style>
+        /* * ==========================================================================
+         * 1. DESIGN SYSTEM (AUTO-THEME)
+         * ==========================================================================
+         */
+        :root {
+            /* Brand Identity */
+            --brand: #9EA3A3;
+            --brand-hover: #7a7e7e;
+            
+            /* Light Mode (Default) */
+            --bg: #ffffff;
+            --surface: #f8f9fa;
+            --input-bg: #ffffff;
+            --border: #dfe1e5;
+            --text-main: #202124;
+            --text-sub: #5f6368;
+            --link: #1a0dab;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --header-h: 70px;
+        }
+
+        /* Dark Mode (System Detected) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #171717;
+                --surface: #202124;
+                --input-bg: #303134;
+                --border: #3c4043;
+                --text-main: #e8eaed;
+                --text-sub: #9aa0a6;
+                --link: #8ab4f8;
+                --shadow: 0 4px 12px rgba(0,0,0,0.4);
+            }
+        }
+
+        /* * ==========================================================================
+         * 2. RESET & BASE
+         * ==========================================================================
+         */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        a { text-decoration: none; color: inherit; cursor: pointer; }
+        button, input { border: none; background: none; font-family: inherit; outline: none; }
+        button { cursor: pointer; }
+
+        /* * ==========================================================================
+         * 3. UI ARCHITECTURE
+         * ==========================================================================
+         */
+        
+        /* HEADER (Hidden until search) */
+        .header {
+            position: fixed; top: 0; left: 0; width: 100%; height: var(--header-h);
+            display: flex; align-items: center; padding: 0 25px;
+            z-index: 100; opacity: 0; pointer-events: none;
+            background: rgba(var(--bg), 0.95); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            transition: opacity 0.3s ease;
+        }
+        body.active .header { opacity: 1; pointer-events: auto; }
+
+        .header-logo {
+            font-size: 1.2rem; font-weight: 800; color: var(--text-main);
+            display: flex; align-items: center; gap: 8px; cursor: pointer;
+        }
+        .header-logo i { color: var(--brand); }
+
+        /* MAIN STAGE */
+        .stage {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 20px; width: 100%; max-width: 800px; margin: 0 auto;
+            transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            min-height: 90vh; /* Hero centers vertically */
+        }
+
+        body.active .stage {
+            justify-content: flex-start; align-items: flex-start;
+            padding-top: 110px; min-height: auto;
+        }
+
+        .brand-hero {
+            font-size: 3.5rem; font-weight: 800; letter-spacing: -2px;
+            color: var(--text-main); margin-bottom: 30px; text-align: center;
+            transition: 0.3s ease;
+        }
+        body.active .brand-hero { font-size: 0; margin: 0; opacity: 0; height: 0; overflow: hidden; }
+
+        /* SEARCH BAR (MOBILE OPTIMIZED) */
+        .search-wrapper {
+            width: 100%; max-width: 600px; height: 56px;
+            background: var(--input-bg); border: 1px solid var(--border);
+            border-radius: 30px; display: flex; align-items: center; padding: 0 8px 0 20px;
+            box-shadow: var(--shadow); transition: all 0.2s ease;
+        }
+        .search-wrapper:hover, .search-wrapper:focus-within {
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            border-color: transparent; transform: translateY(-1px);
+        }
+        
+        .search-icon { color: var(--text-sub); font-size: 1rem; margin-right: 15px; }
+        
+        #input { 
+            flex: 1; height: 100%; font-size: 1.1rem; color: var(--text-main); 
+            font-weight: 500;
+        }
+
+        /* THE SEARCH BUTTON */
+        .submit-btn {
+            width: 40px; height: 40px;
+            background: var(--brand); color: #fff;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s; flex-shrink: 0;
+        }
+        .submit-btn:hover { background: var(--brand-hover); transform: scale(1.05); }
+        .submit-btn:active { transform: scale(0.95); }
+
+        /* HERO BUTTONS */
+        .actions { margin-top: 30px; display: flex; gap: 10px; opacity: 1; transition: 0.3s; flex-wrap: wrap; justify-content: center; }
+        body.active .actions { display: none; opacity: 0; }
+
+        .btn {
+            padding: 0 24px; height: 40px; background: var(--surface);
+            color: var(--text-sub); border-radius: 8px; font-weight: 500;
+            border: 1px solid transparent; transition: 0.2s; font-size: 0.9rem;
+        }
+        .btn:hover { color: var(--text-main); border-color: var(--border); background: var(--input-bg); }
+
+        /* * ==========================================================================
+         * 4. RESULTS DISPLAY
+         * ==========================================================================
+         */
+        #results {
+            width: 100%; display: none; margin-top: 20px;
+            padding-bottom: 100px; animation: fadeUp 0.5s ease;
+        }
+        body.active #results { display: block; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* TABS */
+        .tabs {
+            display: flex; gap: 20px; border-bottom: 1px solid var(--border);
+            margin-bottom: 24px; padding-bottom: 1px; overflow-x: auto;
+            -webkit-overflow-scrolling: touch; /* Smooth scroll on mobile */
+        }
+        .tab {
+            font-size: 0.9rem; color: var(--text-sub); padding: 10px 5px;
+            cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap;
+        }
+        .tab.active { color: var(--brand); border-color: var(--brand); font-weight: 700; }
+
+        /* CARDS */
+        .card { margin-bottom: 20px; animation: fadeIn 0.5s ease; width: 100%; }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        .c-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 0.8rem; }
+        .c-icon {
+            width: 20px; height: 20px; border-radius: 50%; background: var(--surface);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; color: var(--text-sub); border: 1px solid var(--border);
+        }
+        .c-site { font-weight: 700; color: var(--text-main); }
+        .c-dom { color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .c-link {
+            display: block; font-size: 1.2rem; color: var(--link);
+            text-decoration: none; line-height: 1.3; font-weight: 400; margin-bottom: 4px;
+        }
+        .c-link:hover { text-decoration: underline; }
+
+        .c-snip { font-size: 0.9rem; color: var(--text-sub); line-height: 1.6; }
+
+        /* DEEP MATRIX */
+        .matrix { margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); }
+        .m-head { font-size: 0.8rem; font-weight: 800; color: var(--brand); letter-spacing: 1px; margin-bottom: 20px; }
+        .m-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+        
+        .m-chip {
+            display: flex; align-items: center; gap: 10px; padding: 12px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text-main); font-weight: 500; font-size: 0.85rem;
+            transition: 0.2s; text-decoration: none;
+        }
+        .m-chip:hover { border-color: var(--brand); transform: translateY(-2px); }
+        .m-chip i { color: var(--brand); width: 20px; text-align: center; }
+
+        /* UTILS */
+        .loader { text-align: center; padding: 40px; display: none; color: var(--brand); }
+
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-logo" onclick="app.reset()">
+            <i class="fa-solid fa-layer-group"></i> Inbondz
+        </div>
+    </header>
+
+    <main class="stage">
+        
+        <h1 class="brand-hero">Inbondz</h1>
+        
+        <div class="search-wrapper">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="input" placeholder="Search..." autocomplete="off">
+            <button class="submit-btn" onclick="engine.run()">
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <div class="actions">
+            <button class="btn" onclick="engine.run()">Inbondz Search</button>
+            <button class="btn" onclick="engine.lucky()">I'm Feeling Lucky</button>
+        </div>
+
+        <div id="results">
+            
+            <div class="tabs">
+                <div class="tab active" onclick="engine.filter('all', this)">All</div>
+                <div class="tab" onclick="engine.filter('images', this)">Images</div>
+                <div class="tab" onclick="engine.filter('news', this)">News</div>
+                <div class="tab" onclick="engine.filter('video', this)">Videos</div>
+                <div class="tab" onclick="engine.filter('academic', this)">Academic</div>
+                <div class="tab" onclick="engine.filter('social', this)">Social</div>
+                <div class="tab" onclick="engine.filter('tech', this)">Code</div>
+            </div>
+
+            <div id="loader" class="loader"><i class="fa-solid fa-circle-notch fa-spin fa-2x"></i></div>
+
+            <div id="feed"></div>
+
+            <div class="matrix" id="matrix">
+                <div class="m-head">DEEP WEB INDEX</div>
+                <div class="m-grid" id="mGrid"></div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // --- APP CONTROLLER ---
+        const app = {
+            reset: () => {
+                document.body.classList.remove('active');
+                document.getElementById('input').value = '';
+                document.getElementById('feed').innerHTML = '';
+                document.getElementById('mGrid').innerHTML = '';
+            }
+        };
+
+        // --- SEARCH ENGINE ---
+        const engine = {
+            lastQ: '',
+            
+            run: async () => {
+                const q = document.getElementById('input').value.trim();
+                if(!q) return;
+                
+                engine.lastQ = q;
+                document.body.classList.add('active');
+                
+                // Hide keyboard on mobile
+                document.getElementById('input').blur();
+                
+                // Default to 'All'
+                engine.filter('all', document.querySelector('.tab'));
+            },
+
+            lucky: () => {
+                const t = ['SpaceX','AI','History of Rome','Quantum Computing','Biohacking'];
+                document.getElementById('input').value = t[Math.floor(Math.random()*t.length)];
+                engine.run();
+            },
+
+            filter: async (type, el) => {
+                if(!engine.lastQ) return;
+                
+                // UI
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                el.classList.add('active');
+                
+                const feed = document.getElementById('feed');
+                const matrix = document.getElementById('matrix');
+                const loader = document.getElementById('loader');
+                
+                feed.innerHTML = '';
+                document.getElementById('mGrid').innerHTML = '';
+                loader.style.display = 'block';
+
+                if(type === 'all') {
+                    matrix.style.display = 'block';
+                    await engine.fetchLive(engine.lastQ);
+                    engine.renderMatrix('general', engine.lastQ);
+                } else {
+                    matrix.style.display = 'none';
+                    engine.renderDeepLinks(type, engine.lastQ);
+                }
+                
+                loader.style.display = 'none';
+            },
+
+            // TIER 1: Live API
+            fetchLive: async (q) => {
+                const add = (t, l, d, s, i) => {
+                    const dom = new URL(l).hostname.replace('www.','');
+                    const html = `
+                    <div class="card">
+                        <div class="c-meta">
+                            <div class="c-icon"><i class="${i}"></i></div>
+                            <span class="c-site">${s}</span>
+                            <span class="c-dom">• ${dom}</span>
+                        </div>
+                        <a href="${l}" target="_blank" class="c-link">${t}</a>
+                        <div class="c-snip">${d}</div>
+                    </div>`;
+                    document.getElementById('feed').innerHTML += html;
+                };
+
+                const apis = [
+                    fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${q}&format=json&origin=*&limit=3`).then(r=>r.json()).then(d=>d.query.search.forEach(i=>add(i.title, `https://en.wikipedia.org/?curid=${i.pageid}`, i.snippet.replace(/<[^>]*>?/gm,'')+'...', 'Wikipedia', 'fa-brands fa-wikipedia-w'))),
+                    fetch(`https://openlibrary.org/search.json?q=${q}&limit=2`).then(r=>r.json()).then(d=>d.docs.forEach(i=>add(i.title, `https://openlibrary.org${i.key}`, `Author: ${i.author_name?.[0]||'N/A'}`, 'OpenLibrary', 'fa-solid fa-book'))),
+                    fetch(`https://api.coingecko.com/api/v3/search?query=${q}`).then(r=>r.json()).then(d=>d.coins.slice(0,2).forEach(i=>add(i.name, `https://www.coingecko.com/en/coins/${i.id}`, `Rank #${i.market_cap_rank}. Crypto asset.`, 'CoinGecko', 'fa-solid fa-coins'))),
+                    fetch(`https://itunes.apple.com/search?term=${q}&media=music&limit=2`).then(r=>r.json()).then(d=>d.results.forEach(i=>add(i.trackName, i.trackViewUrl, `${i.artistName} • ${i.collectionName}`, 'Apple Music', 'fa-brands fa-itunes')))
+                ];
+
+                await Promise.allSettled(apis);
+                
+                if(document.getElementById('feed').innerHTML === '') {
+                    document.getElementById('feed').innerHTML = '<div style="padding:20px; color:var(--text-sub);">No live previews. Use the Deep Index below.</div>';
+                }
+            },
+
+            // TIER 2: Specialized Lists (Working Links)
+            renderDeepLinks: (cat, q) => {
+                const e = encodeURIComponent(q);
+                const dbs = {
+                    images: [
+                        {n:"Google Images", u:`https://www.google.com/search?tbm=isch&q=${e}`, i:"fa-google"},
+                        {n:"Unsplash", u:`https://unsplash.com/s/photos/${e}`, i:"fa-camera"},
+                        {n:"Pinterest", u:`https://www.pinterest.com/search/pins/?q=${e}`, i:"fa-pinterest"},
+                        {n:"Pexels", u:`https://www.pexels.com/search/${e}/`, i:"fa-image"},
+                        {n:"Bing Images", u:`https://www.bing.com/images/search?q=${e}`, i:"fa-microsoft"}
+                    ],
+                    news: [
+                        {n:"Google News", u:`https://news.google.com/search?q=${e}`, i:"fa-newspaper"},
+                        {n:"Reuters", u:`https://www.reuters.com/site-search/?query=${e}`, i:"fa-globe"},
+                        {n:"BBC", u:`https://www.bbc.co.uk/search?q=${e}`, i:"fa-square-rss"},
+                        {n:"CNN", u:`https://www.cnn.com/search?q=${e}`, i:"fa-tv"}
+                    ],
+                    video: [
+                        {n:"YouTube", u:`https://www.youtube.com/results?search_query=${e}`, i:"fa-youtube"},
+                        {n:"Vimeo", u:`https://vimeo.com/search?q=${e}`, i:"fa-vimeo"},
+                        {n:"Twitch", u:`https://www.twitch.tv/search?term=${e}`, i:"fa-twitch"}
+                    ],
+                    academic: [
+                        {n:"Scholar", u:`https://scholar.google.com/scholar?q=${e}`, i:"fa-graduation-cap"},
+                        {n:"PubMed", u:`https://pubmed.ncbi.nlm.nih.gov/?term=${e}`, i:"fa-user-doctor"},
+                        {n:"JSTOR", u:`https://www.jstor.org/action/doBasicSearch?Query=${e}`, i:"fa-book"},
+                        {n:"ArXiv", u:`https://arxiv.org/search/?query=${e}`, i:"fa-atom"}
+                    ],
+                    social: [
+                        {n:"Twitter/X", u:`https://twitter.com/search?q=${e}`, i:"fa-x-twitter"},
+                        {n:"Reddit", u:`https://reddit.com/search?q=${e}`, i:"fa-reddit"},
+                        {n:"Instagram", u:`https://instagram.com/explore/tags/${q.replace(/\s/g,'')}`, i:"fa-instagram"},
+                        {n:"LinkedIn", u:`https://linkedin.com/search/results/all/?keywords=${e}`, i:"fa-linkedin"}
+                    ],
+                    tech: [
+                        {n:"GitHub", u:`https://github.com/search?q=${e}`, i:"fa-github"},
+                        {n:"Stack Overflow", u:`https://stackoverflow.com/search?q=${e}`, i:"fa-stack-overflow"},
+                        {n:"NPM", u:`https://npmjs.com/search?q=${e}`, i:"fa-npm"}
+                    ]
+                };
+
+                const feed = document.getElementById('feed');
+                const list = dbs[cat] || [];
+                
+                let html = `<div class="m-head">DIRECT SEARCH LINKS</div><div class="m-grid">`;
+                list.forEach(i => {
+                    html += `
+                    <a href="${i.u}" target="_blank" class="m-chip">
+                        <i class="fa-brands ${i.i} fa-solid"></i> ${i.n}
+                    </a>`;
+                });
+                html += `</div>`;
+                feed.innerHTML = html;
+            },
+
+            // General Matrix (For 'All' Tab)
+            renderMatrix: (type, q) => {
+                const e = encodeURIComponent(q);
+                const items = [
+                    {n:"Twitter",u:`https://twitter.com/search?q=${e}`, i:"fa-x-twitter"},
+                    {n:"Reddit",u:`https://reddit.com/search?q=${e}`, i:"fa-reddit"},
+                    {n:"GitHub",u:`https://github.com/search?q=${e}`, i:"fa-github"},
+                    {n:"YouTube",u:`https://youtube.com/results?search_query=${e}`, i:"fa-youtube"},
+                    {n:"Quora",u:`https://www.quora.com/search?q=${e}`, i:"fa-circle-question"}
+                ];
+                
+                let h = '';
+                items.forEach(i => {
+                    h += `<a href="${i.u}" target="_blank" class="m-chip"><i class="fa-brands ${i.i}"></i> ${i.n}</a>`;
+                });
+                document.getElementById('mGrid').innerHTML = h;
+            }
+        };
+
+        // Listeners
+        document.getElementById('input').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') engine.run();
+        });
+
+    </script>
+</body>
+</html>
