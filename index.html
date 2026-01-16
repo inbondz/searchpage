@@ -1,1 +1,604 @@
-<!DOCTY>
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Inbondz Search - The Universal Research Engine">
+    <title>Inbondz Search</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* * ==========================================================================
+         * 1. DESIGN SYSTEM & VARIABLES
+         * ==========================================================================
+         */
+        :root {
+            --brand-primary: #9EA3A3;
+            --brand-secondary: #7a7e7e;
+            
+            /* Light Mode */
+            --bg-app: #ffffff;
+            --bg-panel: #f8f9fa;
+            --bg-card: #ffffff;
+            --bg-input: #ffffff;
+            --bg-overlay: rgba(255, 255, 255, 0.98);
+            
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --text-tertiary: #9aa0a6;
+            
+            --border-subtle: #f1f3f4;
+            --border-default: #dfe1e5;
+            
+            --shadow-1: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-2: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-float: 0 10px 30px rgba(0,0,0,0.15);
+            
+            --link-color: #1a0dab;
+            --header-height: 70px;
+            --radius-pill: 9999px;
+        }
+
+        [data-theme="dark"] {
+            --bg-app: #171717;
+            --bg-panel: #202124;
+            --bg-card: #202124;
+            --bg-input: #303134;
+            --bg-overlay: rgba(23, 23, 23, 0.98);
+            
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --text-tertiary: #5f6368;
+            
+            --border-subtle: #3c4043;
+            --border-default: #5f6368;
+            
+            --shadow-1: 0 1px 3px rgba(0,0,0,0.5);
+            --shadow-2: 0 4px 6px rgba(0,0,0,0.6);
+            --shadow-float: 0 10px 30px rgba(0,0,0,0.7);
+            
+            --link-color: #8ab4f8;
+        }
+
+        /* * ==========================================================================
+         * 2. RESET & BASE
+         * ==========================================================================
+         */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; }
+        body {
+            background-color: var(--bg-app); color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.5; min-height: 100vh; display: flex; flex-direction: column;
+            overflow-x: hidden; transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        a { text-decoration: none; color: inherit; cursor: pointer; transition: color 0.2s; }
+        button, input { border: none; background: none; font-family: inherit; outline: none; }
+        button { cursor: pointer; }
+
+        /* * ==========================================================================
+         * 3. GLOBAL MENU TOGGLE (FIXED Z-INDEX 3000)
+         * ==========================================================================
+         */
+        .menu-toggle {
+            position: fixed; top: 15px; right: 24px;
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 6px;
+            z-index: 3000; /* Highest priority */
+            background-color: rgba(var(--bg-app), 0.1);
+            backdrop-filter: blur(4px);
+            transition: transform 0.2s ease, background-color 0.2s;
+        }
+        .menu-toggle:hover { background-color: var(--bg-panel); transform: scale(1.05); }
+
+        .menu-line {
+            width: 22px; height: 2px;
+            background-color: var(--text-primary);
+            border-radius: 2px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+        }
+
+        /* Active State (X) - Only when DRAWER is open */
+        .menu-toggle.is-active .menu-line:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+        .menu-toggle.is-active .menu-line:nth-child(2) { opacity: 0; transform: translateX(-10px); }
+        .menu-toggle.is-active .menu-line:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+        /* * ==========================================================================
+         * 4. SIDE DRAWER (Z-INDEX 2900 - Above Modals)
+         * ==========================================================================
+         */
+        .drawer-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            z-index: 2800; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .drawer-backdrop.is-visible { opacity: 1; pointer-events: auto; }
+
+        .side-drawer {
+            position: fixed; top: 0; right: 0; width: 300px; height: 100%;
+            background: var(--bg-card); border-left: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-float); z-index: 2900;
+            transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 80px 24px 24px; display: flex; flex-direction: column;
+        }
+        .side-drawer.is-open { transform: translateX(0); }
+
+        .nav-section { margin-bottom: 30px; }
+        .nav-label { font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 1px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px;
+            border-radius: 8px; color: var(--text-primary); font-weight: 600;
+            cursor: pointer; transition: 0.2s;
+        }
+        .nav-item:hover { background: var(--bg-panel); color: var(--brand-primary); }
+        .nav-item i { width: 20px; text-align: center; }
+
+        /* * ==========================================================================
+         * 5. HEADER & HERO
+         * ==========================================================================
+         */
+        .site-header {
+            position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
+            display: flex; align-items: center; padding: 0 24px; z-index: 1000;
+            pointer-events: none; /* Let clicks pass */
+        }
+        
+        .header-logo {
+            font-size: 1.25rem; font-weight: 700; color: var(--text-primary);
+            display: flex; align-items: center; gap: 8px;
+            opacity: 0; transform: translateY(-10px); pointer-events: auto;
+            transition: 0.4s;
+        }
+        body.has-searched .header-logo { opacity: 1; transform: translateY(0); }
+
+        .hero-section {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; width: 100%; max-width: 800px; margin: 0 auto;
+            min-height: 80vh; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body.has-searched .hero-section {
+            min-height: auto; padding-top: 100px;
+            align-items: flex-start;
+        }
+
+        .hero-brand {
+            font-size: 4rem; font-weight: 800; letter-spacing: -2px;
+            color: var(--text-primary); margin-bottom: 30px; transition: 0.4s;
+        }
+        body.has-searched .hero-brand { font-size: 0; margin: 0; opacity: 0; height: 0; overflow: hidden; }
+
+        .search-box {
+            width: 100%; max-width: 600px; height: 52px;
+            background: var(--bg-input); border: 1px solid var(--border-default);
+            border-radius: var(--radius-pill); padding: 0 20px;
+            display: flex; align-items: center; box-shadow: var(--shadow-1);
+            transition: 0.2s;
+        }
+        .search-box:hover, .search-box:focus-within {
+            box-shadow: var(--shadow-2); transform: translateY(-1px); border-color: transparent;
+        }
+        #searchInput { flex: 1; height: 100%; font-size: 1.1rem; color: var(--text-primary); margin-left: 10px; }
+
+        .hero-btns { display: flex; gap: 10px; margin-top: 30px; opacity: 1; transition: 0.3s; }
+        body.has-searched .hero-btns { display: none; opacity: 0; }
+        
+        .btn {
+            padding: 0 20px; height: 36px; background: var(--bg-panel);
+            color: var(--text-secondary); border-radius: 8px; font-weight: 500;
+            transition: 0.2s;
+        }
+        .btn:hover { color: var(--text-primary); border: 1px solid var(--border-default); }
+
+        /* * ==========================================================================
+         * 6. RESULTS & TABS
+         * ==========================================================================
+         */
+        #resultsArea { width: 100%; max-width: 800px; margin: 0 auto; display: none; padding-bottom: 100px; }
+        body.has-searched #resultsArea { display: block; animation: slideUp 0.5s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 24px; margin-top: 10px; overflow-x: auto; }
+        .tab {
+            font-size: 0.9rem; color: var(--text-secondary); padding: 8px 0; cursor: pointer;
+            position: relative; white-space: nowrap;
+        }
+        .tab.active { color: var(--brand-primary); font-weight: 600; }
+        .tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 3px; background: var(--brand-primary); }
+
+        /* Result Card */
+        .res-card { margin-bottom: 24px; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .res-head { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text-primary); margin-bottom: 6px; }
+        .res-icon { width: 24px; height: 24px; border-radius: 50%; background: var(--bg-panel); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+        .res-link { display: block; font-size: 1.3rem; color: var(--link-color); margin-bottom: 4px; }
+        .res-link:hover { text-decoration: underline; }
+        .res-desc { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6; }
+        .res-act { display: flex; gap: 10px; margin-top: 8px; }
+        .act-btn { font-size: 0.8rem; padding: 4px 8px; background: var(--bg-panel); border-radius: 4px; cursor: pointer; color: var(--text-secondary); }
+        .act-btn:hover { background: var(--brand-surface); color: var(--brand-primary); }
+
+        /* Matrix Grid (For Category Tabs) */
+        .matrix-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
+        .matrix-item {
+            display: flex; align-items: center; gap: 10px; padding: 15px;
+            background: var(--bg-card); border: 1px solid var(--border-default);
+            border-radius: 12px; transition: 0.2s;
+        }
+        .matrix-item:hover { transform: translateY(-3px); border-color: var(--brand-primary); box-shadow: var(--shadow-2); }
+        .m-icon { width: 30px; height: 30px; border-radius: 50%; background: var(--bg-panel); display: flex; align-items: center; justify-content: center; }
+
+        /* * ==========================================================================
+         * 7. MODALS (Z-INDEX 2000 - Below Menu Btn)
+         * ==========================================================================
+         */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-overlay); z-index: 2000;
+            padding: 80px 20px; overflow-y: auto;
+            opacity: 0; pointer-events: none; transform: scale(0.98);
+            transition: 0.3s ease;
+        }
+        .modal.is-visible { opacity: 1; pointer-events: auto; transform: scale(1); }
+        
+        .modal-inner { max-width: 700px; margin: 0 auto; position: relative; }
+        .modal-close {
+            position: absolute; top: -50px; right: 0;
+            font-size: 1.5rem; color: var(--text-secondary); cursor: pointer;
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; background: var(--bg-panel);
+        }
+        .modal-close:hover { background: var(--brand-primary); color: white; }
+
+        .modal h2 { font-size: 2rem; margin-bottom: 10px; }
+        
+        /* Settings Toggle */
+        .switch { position: relative; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--border-default); transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background: var(--brand-primary); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--text-primary); color: var(--bg-app);
+            padding: 12px 24px; border-radius: 99px; font-weight: 600;
+            box-shadow: var(--shadow-float); z-index: 4000;
+            animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popUp { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <button class="menu-toggle" id="menuBtn" onclick="app.toggleMenu()">
+        <span class="menu-line"></span>
+        <span class="menu-line"></span>
+        <span class="menu-line"></span>
+    </button>
+
+    <div class="drawer-backdrop" id="drawerBackdrop" onclick="app.toggleMenu()"></div>
+    <aside class="side-drawer" id="sideDrawer">
+        <div class="nav-section">
+            <div class="nav-label">Navigation</div>
+            <div class="nav-item" onclick="app.goHome()"><i class="fa-solid fa-house"></i> Home</div>
+            <div class="nav-item" onclick="app.openModal('vaultModal')"><i class="fa-solid fa-bookmark"></i> Vault (<span id="vaultCount">0</span>)</div>
+            <div class="nav-item" onclick="app.openModal('historyModal')"><i class="fa-solid fa-clock-rotate-left"></i> History</div>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">System</div>
+            <div class="nav-item" onclick="app.openModal('settingsModal')"><i class="fa-solid fa-gear"></i> Settings</div>
+            <div class="nav-item" onclick="app.openModal('termsModal')"><i class="fa-solid fa-file-contract"></i> Terms</div>
+            <div class="nav-item" onclick="app.openModal('contactModal')"><i class="fa-solid fa-user"></i> Contact</div>
+        </div>
+    </aside>
+
+    <header class="site-header" id="siteHeader">
+        <div class="header-logo" onclick="app.goHome()">
+            <i class="fa-solid fa-layer-group" style="color:var(--brand-primary)"></i> Inbondz
+        </div>
+    </header>
+
+    <main class="hero-section" id="heroSection">
+        <h1 class="hero-brand">Inbondz</h1>
+        
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass" style="color:var(--text-tertiary)"></i>
+            <input type="text" id="searchInput" placeholder="Search the infinite web..." autocomplete="off">
+        </div>
+
+        <div class="hero-btns">
+            <button class="btn" onclick="engine.run()">Inbondz Search</button>
+            <button class="btn" onclick="engine.lucky()">I'm Feeling Lucky</button>
+        </div>
+
+        <div id="resultsArea">
+            <div class="tabs">
+                <div class="tab active" onclick="engine.filter('all', this)">All</div>
+                <div class="tab" onclick="engine.filter('images', this)">Images</div>
+                <div class="tab" onclick="engine.filter('news', this)">News</div>
+                <div class="tab" onclick="engine.filter('videos', this)">Videos</div>
+                <div class="tab" onclick="engine.filter('academic', this)">Academic</div>
+                <div class="tab" onclick="engine.filter('code', this)">Dev/Code</div>
+            </div>
+
+            <div id="resultLoader" style="display:none; text-align:center; padding:40px; color:var(--brand-primary);">
+                <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i>
+            </div>
+
+            <div id="feed"></div>
+        </div>
+    </main>
+
+    <div id="vaultModal" class="modal">
+        <div class="modal-inner">
+            <button class="modal-close" onclick="app.closeModals()"><i class="fa-solid fa-xmark"></i></button>
+            <h2>My Vault</h2>
+            <p style="color:var(--text-secondary); margin-bottom:20px;">Saved research items.</p>
+            <div id="vaultList"></div>
+            <button class="btn" style="margin-top:20px;" onclick="data.clearVault()">Clear All</button>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal">
+        <div class="modal-inner">
+            <button class="modal-close" onclick="app.closeModals()"><i class="fa-solid fa-xmark"></i></button>
+            <h2>History</h2>
+            <canvas id="histChart" width="400" height="150" style="margin-bottom:20px;"></canvas>
+            <div id="historyList"></div>
+            <button class="btn" style="margin-top:20px;" onclick="data.clearHistory()">Clear History</button>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-inner">
+            <button class="modal-close" onclick="app.closeModals()"><i class="fa-solid fa-xmark"></i></button>
+            <h2>Settings</h2>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:20px 0; border-bottom:1px solid var(--border-default);">
+                <div><h4>Dark Mode</h4><p style="font-size:0.85rem; color:var(--text-secondary);">Toggle theme</p></div>
+                <label class="switch"><input type="checkbox" id="themeSwitch" onchange="app.toggleTheme()"><span class="slider"></span></label>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:20px 0; border-bottom:1px solid var(--border-default);">
+                <div><h4>Safe Search</h4><p style="font-size:0.85rem; color:var(--text-secondary);">Enforced strict</p></div>
+                <label class="switch"><input type="checkbox" checked disabled><span class="slider"></span></label>
+            </div>
+
+            <button class="btn" style="margin-top:20px;" onclick="data.nuke()">Reset App Data</button>
+        </div>
+    </div>
+
+    <div id="contactModal" class="modal">
+        <div class="modal-inner" style="text-align:center;">
+            <button class="modal-close" onclick="app.closeModals()"><i class="fa-solid fa-xmark"></i></button>
+            <img src="https://unavatar.io/twitter/skwasimx" style="width:120px; height:120px; border-radius:50%; border:4px solid var(--brand-primary); margin-bottom:20px;">
+            <h2>Sk Wasim</h2>
+            <p style="color:var(--text-secondary);">Co-Founder & Lead Architect</p>
+            <a href="https://wasim.inbondz.com" target="_blank" class="btn" style="background:var(--brand-primary); color:white; margin-top:20px;">Profile</a>
+        </div>
+    </div>
+
+    <div id="termsModal" class="modal"><div class="modal-inner"><button class="modal-close" onclick="app.closeModals()"><i class="fa-solid fa-xmark"></i></button><h2>Terms</h2><p>Inbondz Search aggregates public APIs. We do not host content.</p></div></div>
+    <div id="privacyModal" class="modal"><div class="modal-inner"><button class="modal-close" onclick="app.closeModals()"><i class="fa-solid fa-xmark"></i></button><h2>Privacy</h2><p>Zero logs. All data stored locally on your device.</p></div></div>
+
+    <div id="toastAnchor"></div>
+
+    <script>
+        // --- DATA LAYER ---
+        const data = {
+            get: (k) => JSON.parse(localStorage.getItem(k)) || [],
+            set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+            
+            save: (title, link) => {
+                const v = data.get('ib_vault');
+                if(!v.some(i=>i.l===link)){
+                    v.push({t:title, l:link, d:new Date().toLocaleDateString()});
+                    data.set('ib_vault', v); app.updateCount(); app.toast('Saved');
+                } else { app.toast('Already saved'); }
+            },
+            log: (q) => {
+                const h = data.get('ib_hist'); h.unshift({q, d:new Date().toLocaleDateString()});
+                if(h.length>50)h.pop(); data.set('ib_hist', h);
+            },
+            clearVault: () => { data.set('ib_vault', []); app.updateCount(); app.renderVault(); app.toast('Vault Cleared'); },
+            clearHistory: () => { data.set('ib_hist', []); app.renderHist(); app.toast('History Cleared'); },
+            nuke: () => { if(confirm('Reset all?')) { localStorage.clear(); location.reload(); } }
+        };
+
+        // --- APP CONTROLLER ---
+        const app = {
+            init: () => {
+                app.themeCheck(); app.updateCount();
+                document.getElementById('searchInput').addEventListener('keypress', e=>{if(e.key==='Enter') engine.run()});
+                window.addEventListener('scroll', () => {
+                    document.getElementById('siteHeader').classList.toggle('is-scrolled', window.scrollY > 20);
+                });
+                document.addEventListener('keydown', e=>{if(e.key==='Escape') app.closeModals()});
+            },
+            themeCheck: () => {
+                const s = localStorage.getItem('ib_theme');
+                if(s==='dark'||(!s && window.matchMedia('(prefers-color-scheme: dark)').matches)){
+                    document.documentElement.setAttribute('data-theme','dark'); document.getElementById('themeSwitch').checked=true;
+                }
+            },
+            toggleTheme: () => {
+                const curr = document.documentElement.getAttribute('data-theme');
+                const next = curr==='dark'?'light':'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('ib_theme', next);
+            },
+            toggleMenu: () => {
+                document.getElementById('menuBtn').classList.toggle('is-active');
+                document.getElementById('sideDrawer').classList.toggle('is-open');
+                document.getElementById('drawerBackdrop').classList.toggle('is-visible');
+            },
+            openModal: (id) => {
+                app.toggleMenu(); // Close drawer
+                document.getElementById(id).classList.add('is-visible');
+                if(id==='vaultModal') app.renderVault();
+                if(id==='historyModal') app.renderHist();
+            },
+            closeModals: () => {
+                document.querySelectorAll('.modal').forEach(m=>m.classList.remove('is-visible'));
+            },
+            goHome: () => {
+                app.closeModals(); document.getElementById('menuBtn').classList.remove('is-active');
+                document.getElementById('sideDrawer').classList.remove('is-open');
+                document.getElementById('drawerBackdrop').classList.remove('is-visible');
+                document.body.classList.remove('has-searched');
+                document.getElementById('searchInput').value='';
+                document.getElementById('feed').innerHTML='';
+            },
+            updateCount: () => { document.getElementById('vaultCount').innerText = data.get('ib_vault').length; },
+            toast: (msg) => {
+                const d = document.createElement('div'); d.className='toast'; d.innerHTML=msg;
+                document.getElementById('toastAnchor').appendChild(d); setTimeout(()=>d.remove(),3000);
+            },
+            renderVault: () => {
+                const v = data.get('ib_vault');
+                document.getElementById('vaultList').innerHTML = v.length ? v.map(i=>`<div class="res-card"><a href="${i.l}" target="_blank" class="res-link">${i.t}</a><div class="res-desc">Saved: ${i.d}</div></div>`).join('') : '<p style="color:var(--text-secondary)">Empty.</p>';
+            },
+            renderHist: () => {
+                const h = data.get('ib_hist');
+                document.getElementById('historyList').innerHTML = h.length ? h.map(i=>`<div class="nav-item" onclick="app.closeModals(); document.getElementById('searchInput').value='${i.q}'; engine.run();">${i.q}</div>`).join('') : '<p style="color:var(--text-secondary)">Empty.</p>';
+                // Chart logic simplified
+                new Chart(document.getElementById('histChart'), {type:'line',data:{labels:h.slice(0,5).map(x=>x.d),datasets:[{data:h.slice(0,5).map((_,i)=>i+1),borderColor:'#9EA3A3'}]},options:{plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false}}}});
+            }
+        };
+
+        // --- SEARCH ENGINE (WITH CATEGORY LOGIC) ---
+        const engine = {
+            lastQ: '',
+            run: async () => {
+                const q = document.getElementById('searchInput').value.trim();
+                if(!q) return;
+                engine.lastQ = q; data.log(q);
+                document.body.classList.add('has-searched');
+                engine.filter('all', document.querySelector('.tab')); // Reset to All
+            },
+            lucky: () => {
+                const t = ['SpaceX','AI','Bitcoin','History of Rome','Biohacking'];
+                const r = t[Math.floor(Math.random()*t.length)];
+                document.getElementById('searchInput').value=r; engine.run();
+            },
+            filter: async (type, btn) => {
+                const q = engine.lastQ; if(!q) return;
+                
+                // UI Tab Active
+                document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const feed = document.getElementById('feed');
+                const loader = document.getElementById('resultLoader');
+                feed.innerHTML = ''; loader.style.display = 'block';
+
+                if (type === 'all') await engine.fetchAll(q);
+                else engine.renderCategory(type, q); // The "No Dummy" Fix
+
+                loader.style.display = 'none';
+            },
+            
+            // TIER 1: LIVE API (For 'All' Tab)
+            fetchAll: async (q) => {
+                const add = (t,l,d,s) => {
+                    const dom = new URL(l).hostname.replace('www.','');
+                    const cleanT = t.replace(/'/g,""); const cleanL = l.replace(/'/g,"");
+                    document.getElementById('feed').innerHTML += `<div class="res-card"><div class="res-head"><div class="res-icon">${s[0]}</div><span>${s}</span><span style="color:var(--text-tertiary)">• ${dom}</span></div><a href="${l}" target="_blank" class="res-link">${t}</a><div class="res-desc">${d}</div><div class="res-act"><div class="act-btn" onclick="data.save('${cleanT}','${cleanL}')"><i class="fa-regular fa-bookmark"></i> Save</div></div></div>`;
+                };
+                
+                const apis = [
+                    fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${q}&format=json&origin=*&limit=3`).then(r=>r.json()).then(d=>d.query.search.forEach(i=>add(i.title, `https://en.wikipedia.org/?curid=${i.pageid}`, i.snippet.replace(/<[^>]*>?/gm,'')+'...', 'Wikipedia'))),
+                    fetch(`https://openlibrary.org/search.json?q=${q}&limit=2`).then(r=>r.json()).then(d=>d.docs.forEach(i=>add(i.title, `https://openlibrary.org${i.key}`, `By ${i.author_name?.[0]||'Unknown'}.`, 'OpenLibrary'))),
+                    fetch(`https://api.coingecko.com/api/v3/search?query=${q}`).then(r=>r.json()).then(d=>d.coins.slice(0,2).forEach(i=>add(i.name, `https://www.coingecko.com/en/coins/${i.id}`, `Rank #${i.market_cap_rank}. Crypto asset.`, 'CoinGecko'))),
+                    fetch(`https://itunes.apple.com/search?term=${q}&media=music&limit=2`).then(r=>r.json()).then(d=>d.results.forEach(i=>add(i.trackName, i.trackViewUrl, `${i.artistName} • ${i.collectionName}`, 'Apple Music')))
+                ];
+                await Promise.allSettled(apis);
+                if(document.getElementById('feed').innerHTML === '') document.getElementById('feed').innerHTML = '<p style="padding:20px; color:var(--text-secondary)">No live previews. Try a specific category.</p>';
+            },
+
+            // TIER 2: DEEP LINKS (The "No Dummy" Fix)
+            renderCategory: (type, q) => {
+                const e = encodeURIComponent(q); const cl = q.replace(/\s/g,'');
+                const feed = document.getElementById('feed');
+                
+                // Define the databases for each tab
+                const dbs = {
+                    images: [
+                        {n:"Google Images", u:`https://www.google.com/search?tbm=isch&q=${e}`, i:"fa-google"},
+                        {n:"Unsplash", u:`https://unsplash.com/s/photos/${e}`, i:"fa-camera"},
+                        {n:"Pexels", u:`https://www.pexels.com/search/${e}/`, i:"fa-image"},
+                        {n:"Pinterest", u:`https://www.pinterest.com/search/pins/?q=${e}`, i:"fa-pinterest"},
+                        {n:"Flickr", u:`https://www.flickr.com/search/?text=${e}`, i:"fa-images"},
+                        {n:"Getty Images", u:`https://www.gettyimages.com/photos/${e}`, i:"fa-camera-retro"}
+                    ],
+                    news: [
+                        {n:"Google News", u:`https://news.google.com/search?q=${e}`, i:"fa-newspaper"},
+                        {n:"Reuters", u:`https://www.reuters.com/site-search/?query=${e}`, i:"fa-globe"},
+                        {n:"BBC News", u:`https://www.bbc.co.uk/search?q=${e}`, i:"fa-square-rss"},
+                        {n:"Associated Press", u:`https://apnews.com/search?q=${e}`, i:"fa-bullhorn"},
+                        {n:"CNN", u:`https://www.cnn.com/search?q=${e}`, i:"fa-tv"},
+                        {n:"Al Jazeera", u:`https://www.aljazeera.com/search/${e}`, i:"fa-earth-americas"}
+                    ],
+                    videos: [
+                        {n:"YouTube", u:`https://www.youtube.com/results?search_query=${e}`, i:"fa-youtube"},
+                        {n:"Vimeo", u:`https://vimeo.com/search?q=${e}`, i:"fa-vimeo"},
+                        {n:"Dailymotion", u:`https://www.dailymotion.com/search/${e}`, i:"fa-video"},
+                        {n:"Twitch", u:`https://www.twitch.tv/search?term=${e}`, i:"fa-twitch"},
+                        {n:"TikTok", u:`https://www.tiktok.com/search?q=${e}`, i:"fa-tiktok"},
+                        {n:"TED Talks", u:`https://www.ted.com/search?q=${e}`, i:"fa-microphone"}
+                    ],
+                    academic: [
+                        {n:"Google Scholar", u:`https://scholar.google.com/scholar?q=${e}`, i:"fa-graduation-cap"},
+                        {n:"PubMed", u:`https://pubmed.ncbi.nlm.nih.gov/?term=${e}`, i:"fa-user-doctor"},
+                        {n:"JSTOR", u:`https://www.jstor.org/action/doBasicSearch?Query=${e}`, i:"fa-book"},
+                        {n:"ArXiv", u:`https://arxiv.org/search/?query=${e}`, i:"fa-atom"},
+                        {n:"ResearchGate", u:`https://www.researchgate.net/search?q=${e}`, i:"fa-microscope"},
+                        {n:"ScienceDirect", u:`https://www.sciencedirect.com/search?qs=${e}`, i:"fa-flask"}
+                    ],
+                    code: [
+                        {n:"GitHub", u:`https://github.com/search?q=${e}`, i:"fa-github"},
+                        {n:"Stack Overflow", u:`https://stackoverflow.com/search?q=${e}`, i:"fa-stack-overflow"},
+                        {n:"NPM", u:`https://www.npmjs.com/search?q=${e}`, i:"fa-box"},
+                        {n:"Docker Hub", u:`https://hub.docker.com/search?q=${e}`, i:"fa-docker"},
+                        {n:"PyPI", u:`https://pypi.org/search/?q=${e}`, i:"fa-python"},
+                        {n:"HuggingFace", u:`https://huggingface.co/models?search=${e}`, i:"fa-face-smile"}
+                    ]
+                };
+
+                const links = dbs[type] || [];
+                let gridHTML = `<div class="matrix-grid">`;
+                links.forEach(l => {
+                    gridHTML += `
+                        <a href="${l.u}" target="_blank" class="matrix-item">
+                            <div class="m-icon"><i class="fa-brands ${l.i} fa-solid"></i></div>
+                            <div>
+                                <div style="font-weight:600; font-size:0.9rem;">${l.n}</div>
+                                <div style="font-size:0.75rem; color:var(--text-secondary);">Direct Search</div>
+                            </div>
+                        </a>
+                    `;
+                });
+                gridHTML += `</div>`;
+                
+                feed.innerHTML = `
+                    <div style="margin-bottom:20px; color:var(--text-secondary); font-size:0.9rem;">
+                        <i class="fa-solid fa-bolt" style="color:var(--brand-primary)"></i> Direct access to specialized engines:
+                    </div>
+                    ${gridHTML}
+                `;
+            }
+        };
+
+        window.addEventListener('load', app.init);
+    </script>
+</body>
+</html>
