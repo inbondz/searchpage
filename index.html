@@ -1,1 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inbondz | Neural Upscale</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <style>
+        /* =========================================
+           1. CYBER-CORE THEME
+           ========================================= */
+        :root {
+            --bg: #050505;
+            --surface: #0f0f0f;
+            --border: #333;
+            --accent: #00ff88; /* Neon Green */
+            --accent-dim: rgba(0, 255, 136, 0.1);
+            --text: #fff;
+            --text-sub: #888;
+            
+            --scan-line: rgba(0, 255, 136, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Courier New', Courier, monospace; /* Tech font */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* =========================================
+           2. HEADER
+           ========================================= */
+        header {
+            height: 60px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .logo { 
+            font-weight: 900; letter-spacing: 2px; color: var(--accent);
+            text-shadow: 0 0 10px var(--accent-dim);
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        .save-btn {
+            background: var(--accent); color: #000;
+            border: none; padding: 8px 24px; border-radius: 2px;
+            font-weight: 900; cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 0 15px var(--accent-dim);
+            transition: 0.2s; clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%, 0% 25%);
+        }
+        .save-btn:active { transform: scale(0.95); opacity: 0.8; }
+
+        /* =========================================
+           3. VIEWPORT (ANIMATED SCANNER)
+           ========================================= */
+        .workspace {
+            flex: 1; position: relative;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        .canvas-wrap {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border: 1px solid var(--border);
+            max-width: 90%; max-height: 70vh;
+            overflow: hidden;
+        }
+
+        canvas { display: block; max-width: 100%; height: auto; }
+
+        /* THE SCANNER BEAM */
+        .scanner {
+            position: absolute; top: 0; left: 0; width: 100%; height: 5px;
+            background: var(--accent);
+            box-shadow: 0 0 15px var(--accent);
+            opacity: 0; pointer-events: none;
+            z-index: 20;
+        }
+        .scanner.active { animation: scan 2s ease-in-out infinite; opacity: 1; }
+
+        @keyframes scan {
+            0% { top: 0; }
+            50% { top: 100%; }
+            100% { top: 0; }
+        }
+
+        /* STATS OVERLAY */
+        .stats {
+            position: absolute; top: 20px; left: 20px;
+            font-size: 0.7rem; color: var(--accent);
+            background: rgba(0,0,0,0.8); padding: 10px;
+            border: 1px solid var(--border); display: none;
+        }
+
+        /* UPLOAD UI */
+        .upload-ui {
+            position: absolute; inset: 0; z-index: 10;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: var(--bg);
+        }
+        
+        .upload-box {
+            width: 300px; height: 180px;
+            border: 1px dashed var(--border);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: var(--text-sub); transition: 0.3s;
+            cursor: pointer;
+        }
+        .upload-box:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+        .upload-box i { font-size: 2rem; margin-bottom: 10px; }
+
+        /* =========================================
+           4. CONTROLS (BOTTOM BAR)
+           ========================================= */
+        .controls {
+            height: 120px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 20px;
+            display: flex; flex-direction: column; gap: 15px;
+            justify-content: center;
+        }
+
+        .label {
+            font-size: 0.7rem; color: var(--text-sub); text-transform: uppercase; letter-spacing: 2px; text-align: center;
+        }
+
+        .grid { display: flex; gap: 10px; justify-content: center; }
+
+        .upscale-btn {
+            flex: 1; max-width: 80px; height: 45px;
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-sub); font-family: inherit; font-weight: 700;
+            cursor: pointer; transition: 0.2s; position: relative; overflow: hidden;
+        }
+        
+        .upscale-btn:hover { border-color: var(--text); color: var(--text); }
+        
+        .upscale-btn.active {
+            border-color: var(--accent); color: var(--bg);
+            background: var(--accent);
+            box-shadow: 0 0 20px var(--accent-dim);
+        }
+
+        /* Mobile specific adjustments */
+        @media (min-width: 768px) {
+            .controls {
+                position: absolute; right: 20px; bottom: 20px; width: 300px;
+                border: 1px solid var(--border); background: rgba(15,15,15,0.9);
+                backdrop-filter: blur(10px);
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo"><i class="fa-solid fa-microchip"></i> INBONDZ</div>
+        <button class="save-btn" onclick="app.download()">DOWNLOAD HD</button>
+    </header>
+
+    <div class="workspace">
+        
+        <div class="upload-ui" id="upload">
+            <label class="upload-box">
+                <i class="fa-solid fa-upload"></i>
+                <div>LOAD IMAGE</div>
+                <input type="file" hidden accept="image/*" onchange="app.load(this)">
+            </label>
+        </div>
+
+        <div class="canvas-wrap" id="canvasWrap" style="display:none;">
+            <div class="scanner" id="scanLine"></div>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div class="stats" id="stats">
+            ORIGINAL: <span id="dim-org">0x0</span><br>
+            TARGET: <span id="dim-new">0x0</span><br>
+            MODE: <span id="mode-txt">RAW</span>
+        </div>
+
+    </div>
+
+    <div class="controls">
+        <div class="label">NEURAL ENHANCEMENT FACTOR</div>
+        <div class="grid">
+            <button class="upscale-btn" onclick="app.process(2, this)">2X</button>
+            <button class="upscale-btn" onclick="app.process(4, this)">4X</button>
+            <button class="upscale-btn" onclick="app.process(6, this)">6X</button>
+            <button class="upscale-btn" onclick="app.process(8, this)">8X</button>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            canvas: document.getElementById('canvas'),
+            ctx: null,
+            img: new Image(),
+            width: 0,
+            height: 0,
+
+            init: () => {
+                app.ctx = app.canvas.getContext('2d');
+            },
+
+            load: (input) => {
+                if(input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        app.img.src = e.target.result;
+                        app.img.onload = () => {
+                            // Setup
+                            app.width = app.img.width;
+                            app.height = app.img.height;
+                            
+                            // UI Reset
+                            document.getElementById('upload').style.display = 'none';
+                            document.getElementById('canvasWrap').style.display = 'block';
+                            document.getElementById('stats').style.display = 'block';
+                            
+                            // Initial Draw (1x)
+                            app.render(1);
+                        }
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            },
+
+            // The Engine
+            process: (factor, btn) => {
+                if(!app.width) return;
+
+                // UI Feedback
+                document.querySelectorAll('.upscale-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Start Scanner Animation
+                const scanner = document.getElementById('scanLine');
+                scanner.classList.add('active');
+
+                // Simulate Processing Delay (Animation feel)
+                setTimeout(() => {
+                    app.render(factor, true); // true = apply sharpening
+                    scanner.classList.remove('active'); // Stop scan
+                }, 800); // 0.8s processing time
+            },
+
+            render: (scale, sharpen = false) => {
+                // Calc new size
+                const w = Math.floor(app.width * scale);
+                const h = Math.floor(app.height * scale);
+
+                // Update Stats
+                document.getElementById('dim-org').innerText = `${app.width}x${app.height}`;
+                document.getElementById('dim-new').innerText = `${w}x${h}`;
+                document.getElementById('mode-txt').innerText = sharpen ? `ENHANCED ${scale}X` : 'RAW';
+
+                // Resize Canvas
+                app.canvas.width = w;
+                app.canvas.height = h;
+
+                // High Quality Smoothing
+                app.ctx.imageSmoothingEnabled = true;
+                app.ctx.imageSmoothingQuality = 'high';
+
+                // Draw
+                app.ctx.drawImage(app.img, 0, 0, w, h);
+
+                // Apply Sharpening (The "Enhance" Logic)
+                // We use a convolution filter on the pixel data to fake higher res details
+                if(sharpen) {
+                    app.applySharpen(w, h);
+                }
+            },
+
+            // Math for Sharpening (The Secret Sauce)
+            applySharpen: (w, h) => {
+                const imgData = app.ctx.getImageData(0, 0, w, h);
+                const d = imgData.data;
+                const buff = new Uint8ClampedArray(d); // Clone data
+                
+                // Simple Sharpen Kernel
+                //  0 -1  0
+                // -1  5 -1
+                //  0 -1  0
+                
+                const w4 = w * 4;
+                const limit = d.length - w4 - 4;
+
+                // Optimized loop (Skip borders for speed)
+                for (let i = w4 + 4; i < limit; i += 4) {
+                    // RGB only, skip Alpha
+                    for (let c = 0; c < 3; c++) {
+                        const k = i + c;
+                        // Center * 5 - (Neighbors)
+                        d[k] = buff[k]*5 - (buff[k-4] + buff[k+4] + buff[k-w4] + buff[k+w4]);
+                    }
+                }
+                
+                app.ctx.putImageData(imgData, 0, 0);
+            },
+
+            download: () => {
+                if(!app.width) return;
+                const a = document.createElement('a');
+                a.download = `INBONDZ_HD_${Date.now()}.png`;
+                a.href = app.canvas.toDataURL('image/png', 1.0); // Max Quality
+                a.click();
+            }
+        };
+
+        app.init();
+    </script>
+</body>
+</html>
