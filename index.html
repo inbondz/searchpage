@@ -1,1 +1,516 @@
-<!DO
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inbondz Enhancer</title>
+    
+    <style>
+        /* =========================================
+           1. QUANTUM DESIGN SYSTEM
+           ========================================= */
+        :root {
+            --brand: #9EA3A3;
+            --brand-glow: 0 0 20px rgba(158, 163, 163, 0.2);
+            
+            --bg: #050505;       /* Deep Black */
+            --surface: #121212;  /* Panel Grey */
+            --border: #222222;
+            --input: #1a1a1a;
+            
+            --text: #ffffff;
+            --text-muted: #888888;
+            
+            --slider-track: #333;
+            --slider-thumb: #e0e0e0;
+        }
+
+        /* AUTO THEME (Light Mode Support if needed, but Pro apps usually stay dark) */
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg: #f4f4f4;
+                --surface: #ffffff;
+                --border: #e0e0e0;
+                --input: #eeeeee;
+                --text: #111111;
+                --text-muted: #666666;
+                --slider-track: #ddd;
+                --slider-thumb: #333;
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* =========================================
+           2. HEADER (TEXT ONLY - NO ICON)
+           ========================================= */
+        header {
+            height: 60px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 30px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .brand {
+            font-weight: 900;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, var(--text), var(--brand));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-actions { display: flex; gap: 12px; }
+
+        .btn {
+            background: var(--input);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn:hover { border-color: var(--brand); transform: translateY(-1px); }
+        
+        .btn-primary {
+            background: var(--text);
+            color: var(--bg);
+            border-color: var(--text);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+            opacity: 0.9;
+        }
+
+        /* =========================================
+           3. WORKSPACE
+           ========================================= */
+        .workspace {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* CANVAS VIEWPORT */
+        .viewport {
+            flex: 1;
+            background: var(--bg);
+            display: flex; align-items: center; justify-content: center;
+            padding: 40px;
+            position: relative;
+            /* Subtle Grid Pattern */
+            background-image: radial-gradient(var(--border) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transition: 0.1s filter;
+        }
+
+        /* COMPARE BUTTON (Floating) */
+        .compare-btn {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            padding: 10px 30px; background: rgba(0,0,0,0.8);
+            border: 1px solid var(--border); color: #fff;
+            border-radius: 30px; font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; z-index: 50; display: none;
+            backdrop-filter: blur(5px);
+        }
+        .compare-btn:active { background: var(--brand); color: #000; }
+
+        /* UPLOAD STATE */
+        .upload-overlay {
+            position: absolute; inset: 0;
+            background: var(--bg);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 10;
+        }
+        .upload-box {
+            width: 500px; height: 300px;
+            border: 2px dashed var(--border);
+            border-radius: 20px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 20px; transition: 0.2s;
+            cursor: pointer;
+        }
+        .upload-box:hover { border-color: var(--brand); background: var(--surface); }
+        .upload-text { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+        .upload-sub { color: var(--text-muted); }
+
+        /* =========================================
+           4. CONTROL DECK (SIDEBAR)
+           ========================================= */
+        .controls {
+            width: 340px;
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            padding: 25px;
+            overflow-y: auto;
+            z-index: 20;
+        }
+
+        .section-title {
+            font-size: 0.75rem; font-weight: 800; color: var(--brand);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 25px; display: block;
+        }
+
+        .slider-group { margin-bottom: 30px; }
+        
+        .label-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px;
+        }
+        .label-name { font-weight: 600; font-size: 0.9rem; }
+        .label-val { font-family: monospace; font-size: 0.85rem; color: var(--brand); }
+
+        /* PRO SLIDERS */
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent;
+        }
+        input[type=range]:focus { outline: none; }
+        
+        /* Track */
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer;
+            background: var(--slider-track); border-radius: 2px;
+        }
+        
+        /* Thumb */
+        input[type=range]::-webkit-slider-thumb {
+            height: 18px; width: 18px; border-radius: 50%;
+            background: var(--slider-thumb); cursor: pointer;
+            -webkit-appearance: none; margin-top: -7px;
+            transition: transform 0.1s; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        input[type=range]:hover::-webkit-slider-thumb {
+            background: var(--brand); transform: scale(1.2);
+        }
+
+        /* FILTER PRESETS */
+        .preset-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px;
+        }
+        .preset-card {
+            background: var(--input); padding: 12px; border-radius: 8px;
+            text-align: center; font-size: 0.85rem; font-weight: 600;
+            border: 1px solid transparent; cursor: pointer; transition: 0.2s;
+        }
+        .preset-card:hover { border-color: var(--brand); color: var(--text); }
+        .preset-card.active { background: var(--brand); color: #000; border-color: var(--brand); }
+
+        /* LOADING */
+        .loader {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 50;
+            display: none; align-items: center; justify-content: center;
+            color: var(--brand); font-weight: 700; letter-spacing: 2px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <svg style="display: none;">
+        <defs>
+            <filter id="sharpnessFilter">
+                <feConvolveMatrix order="3" preserveAlpha="true" kernelMatrix="0 -1 0 -1 5 -1 0 -1 0"/>
+            </filter>
+            <filter id="clarityFilter">
+                <feComponentTransfer>
+                    <feFuncR type="gamma" amplitude="1.2" exponent="1.1"/>
+                    <feFuncG type="gamma" amplitude="1.2" exponent="1.1"/>
+                    <feFuncB type="gamma" amplitude="1.2" exponent="1.1"/>
+                </feComponentTransfer>
+            </filter>
+        </defs>
+    </svg>
+
+    <header>
+        <div class="brand">INBONDZ ENHANCER</div>
+        <div class="header-actions">
+            <label class="btn">
+                OPEN IMAGE
+                <input type="file" id="fileInput" accept="image/*" hidden onchange="engine.load(this)">
+            </label>
+            <button class="btn btn-primary" onclick="engine.export()">EXPORT HD</button>
+        </div>
+    </header>
+
+    <div class="workspace">
+        
+        <div class="viewport">
+            <div class="upload-overlay" id="uploadState">
+                <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-text">DRAG & DROP</div>
+                    <div class="upload-sub">Supports 4K / RAW / PNG / JPG</div>
+                </div>
+            </div>
+            
+            <canvas id="canvas"></canvas>
+            
+            <div class="compare-btn" id="compareBtn" onmousedown="engine.compare(true)" onmouseup="engine.compare(false)" ontouchstart="engine.compare(true)" ontouchend="engine.compare(false)">
+                HOLD TO COMPARE
+            </div>
+
+            <div class="loader" id="loader">RENDERING...</div>
+        </div>
+
+        <aside class="controls">
+            
+            <span class="section-title">Smart Enhancement</span>
+
+            <div class="slider-group">
+                <div class="label-row"><span class="label-name">Exposure</span><span class="label-val" id="v-bri">0</span></div>
+                <input type="range" id="bri" min="-50" max="50" value="0" oninput="engine.process()">
+            </div>
+
+            <div class="slider-group">
+                <div class="label-row"><span class="label-name">Contrast (10x)</span><span class="label-val" id="v-con">0</span></div>
+                <input type="range" id="con" min="-50" max="100" value="0" oninput="engine.process()">
+            </div>
+
+            <div class="slider-group">
+                <div class="label-row"><span class="label-name">Vibrance (10x)</span><span class="label-val" id="v-sat">0</span></div>
+                <input type="range" id="sat" min="-50" max="150" value="0" oninput="engine.process()">
+            </div>
+
+            <span class="section-title" style="margin-top:20px;">Detail & Clarity</span>
+
+            <div class="slider-group">
+                <div class="label-row"><span class="label-name">Sharpness</span><span class="label-val" id="v-shp">0</span></div>
+                <input type="range" id="shp" min="0" max="100" value="0" oninput="engine.process()">
+            </div>
+
+            <div class="slider-group">
+                <div class="label-row"><span class="label-name">Warmth</span><span class="label-val" id="v-warm">0</span></div>
+                <input type="range" id="warm" min="-50" max="50" value="0" oninput="engine.process()">
+            </div>
+
+            <span class="section-title" style="margin-top:20px;">Pro Filters</span>
+            <div class="preset-grid">
+                <div class="preset-card active" onclick="engine.setPreset('none', this)">Normal</div>
+                <div class="preset-card" onclick="engine.setPreset('punch', this)">Punch</div>
+                <div class="preset-card" onclick="engine.setPreset('noir', this)">Noir</div>
+                <div class="preset-card" onclick="engine.setPreset('vivid', this)">Vivid</div>
+                <div class="preset-card" onclick="engine.setPreset('fade', this)">Fade</div>
+                <div class="preset-card" onclick="engine.setPreset('drama', this)">Drama</div>
+            </div>
+
+            <button class="btn" onclick="engine.reset()">RESET ALL</button>
+
+        </aside>
+    </div>
+
+    <script>
+        /**
+         * INBONDZ GRAPHICS ENGINE
+         * Uses HTML5 Canvas 2D + SVG Filters for hardware acceleration.
+         */
+        const engine = {
+            canvas: document.getElementById('canvas'),
+            ctx: null,
+            img: new Image(),
+            originalSrc: null, // For comparison
+            isComparing: false,
+            
+            // Current State
+            params: {
+                bri: 0, con: 0, sat: 0, warm: 0, shp: 0, preset: 'none'
+            },
+
+            init: () => {
+                engine.ctx = engine.canvas.getContext('2d', { willReadFrequently: true });
+                
+                // Drag & Drop
+                const dz = document.querySelector('.upload-box');
+                document.body.addEventListener('dragover', e => e.preventDefault());
+                document.body.addEventListener('drop', e => {
+                    e.preventDefault();
+                    if(e.dataTransfer.files[0]) engine.readFile(e.dataTransfer.files[0]);
+                });
+            },
+
+            load: (input) => {
+                if(input.files && input.files[0]) engine.readFile(input.files[0]);
+            },
+
+            readFile: (file) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    engine.img.src = e.target.result;
+                    engine.originalSrc = e.target.result;
+                    engine.img.onload = () => {
+                        document.getElementById('uploadState').style.display = 'none';
+                        document.getElementById('compareBtn').style.display = 'block';
+                        engine.renderBase();
+                    }
+                };
+                reader.readAsDataURL(file);
+            },
+
+            renderBase: () => {
+                // Fit canvas to screen while maintaining aspect ratio
+                const maxWidth = 3000; // Limit internal resolution for performance
+                let w = engine.img.width;
+                let h = engine.img.height;
+                
+                if (w > maxWidth) {
+                    h = (h * maxWidth) / w;
+                    w = maxWidth;
+                }
+
+                engine.canvas.width = w;
+                engine.canvas.height = h;
+                engine.process(); // Apply default
+            },
+
+            // THE PROCESSING CORE
+            process: () => {
+                if(!engine.img.src || engine.isComparing) return;
+
+                // 1. Gather Values
+                const p = engine.params;
+                p.bri = parseInt(document.getElementById('bri').value);
+                p.con = parseInt(document.getElementById('con').value);
+                p.sat = parseInt(document.getElementById('sat').value);
+                p.warm = parseInt(document.getElementById('warm').value);
+                p.shp = parseInt(document.getElementById('shp').value);
+
+                // 2. Update UI Numbers
+                document.getElementById('v-bri').innerText = p.bri;
+                document.getElementById('v-con').innerText = p.con;
+                document.getElementById('v-sat').innerText = p.sat;
+                document.getElementById('v-warm').innerText = p.warm;
+                document.getElementById('v-shp').innerText = p.shp;
+
+                // 3. Build Filter String (Hardware Accelerated)
+                // Mapping inputs (-50 to 100) to CSS filter units
+                
+                // Brightness: 100% is base. range 50% to 150%
+                const cssBri = 100 + p.bri; 
+                
+                // Contrast: 100% base. range 50% to 200% (10x feel)
+                const cssCon = 100 + p.con;
+                
+                // Saturation: 100% base. range 50% to 250% (10x feel)
+                const cssSat = 100 + p.sat;
+                
+                // Warmth uses Sepia mix
+                const cssSepia = p.warm > 0 ? p.warm : 0;
+                // Coolness uses Hue Rotate
+                const cssHue = p.warm < 0 ? p.warm / 2 : 0;
+
+                let filterStr = `brightness(${cssBri}%) contrast(${cssCon}%) saturate(${cssSat}%) sepia(${cssSepia}%) hue-rotate(${cssHue}deg)`;
+
+                // 4. Apply Presets Overlay
+                if(p.preset === 'noir') filterStr += ' grayscale(100%) contrast(120%)';
+                if(p.preset === 'vivid') filterStr += ' saturate(130%) contrast(110%)';
+                if(p.preset === 'fade') filterStr += ' brightness(110%) opacity(0.8)';
+                if(p.preset === 'drama') filterStr += ' contrast(140%) saturate(90%)';
+
+                // 5. Sharpening Logic
+                // We use SVG filter for sharpening if value > 0
+                if(p.shp > 0) {
+                    filterStr += ` url(#sharpnessFilter)`; // Connects to the SVG in HTML
+                }
+
+                // 6. Draw
+                engine.ctx.filter = filterStr;
+                engine.ctx.clearRect(0, 0, engine.canvas.width, engine.canvas.height);
+                engine.ctx.drawImage(engine.img, 0, 0, engine.canvas.width, engine.canvas.height);
+            },
+
+            // PRESETS MANAGER
+            setPreset: (name, el) => {
+                document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
+                el.classList.add('active');
+                
+                engine.params.preset = name;
+                
+                // Auto-adjust sliders for specific presets
+                const reset = () => {
+                    document.getElementById('bri').value = 0;
+                    document.getElementById('con').value = 0;
+                    document.getElementById('sat').value = 0;
+                };
+
+                if(name === 'punch') {
+                    document.getElementById('con').value = 20;
+                    document.getElementById('sat').value = 30;
+                } else if(name === 'none') {
+                    reset();
+                }
+                
+                engine.process();
+            },
+
+            // COMPARE FUNCTION
+            compare: (active) => {
+                if(!engine.img.src) return;
+                engine.isComparing = active;
+                
+                if(active) {
+                    // Draw original raw image without filters
+                    engine.ctx.filter = 'none';
+                    engine.ctx.drawImage(engine.img, 0, 0, engine.canvas.width, engine.canvas.height);
+                    
+                    // Add text label
+                    engine.ctx.font = "bold 40px Arial";
+                    engine.ctx.fillStyle = "white";
+                    engine.ctx.strokeStyle = "black";
+                    engine.ctx.lineWidth = 2;
+                    engine.ctx.strokeText("ORIGINAL", 20, 50);
+                    engine.ctx.fillText("ORIGINAL", 20, 50);
+                } else {
+                    // Re-run process to apply current sliders
+                    engine.process();
+                }
+            },
+
+            reset: () => {
+                document.getElementById('bri').value = 0;
+                document.getElementById('con').value = 0;
+                document.getElementById('sat').value = 0;
+                document.getElementById('warm').value = 0;
+                document.getElementById('shp').value = 0;
+                engine.setPreset('none', document.querySelector('.preset-card'));
+            },
+
+            export: () => {
+                if(!engine.img.src) return;
+                const link = document.createElement('a');
+                link.download = `Inbondz_Enhanced_${Date.now()}.jpg`;
+                // Export at 0.9 quality JPEG for good balance
+                link.href = engine.canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+            }
+        };
+
+        engine.init();
+    </script>
+</body>
+</html>
