@@ -1,1 +1,371 @@
-<!DO>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inbondz Enhancer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* 1. CORE THEME: "Midnight Minimal"
+           Solid colors. No blurs. High contrast.
+        */
+        :root {
+            --bg: #000000;
+            --panel: #111111;
+            --border: #333333;
+            --accent: #ffffff;
+            --text: #ffffff;
+            --text-dim: #666666;
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 2. HEADER */
+        header {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .logo { font-weight: 800; font-size: 1.1rem; letter-spacing: 1px; color: var(--text); }
+        
+        .save-btn {
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .save-btn:active { opacity: 0.7; }
+
+        /* 3. WORKSPACE */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-color: #050505; /* Slightly lighter than pure black for contrast */
+        }
+
+        /* The Canvas Container */
+        .canvas-container {
+            max-width: 90%;
+            max-height: 60vh;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border: 1px solid var(--border);
+            /* Checkered background for transparency */
+            background-image: 
+                linear-gradient(45deg, #1a1a1a 25%, transparent 25%), 
+                linear-gradient(-45deg, #1a1a1a 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #1a1a1a 75%), 
+                linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+
+        /* Upload Screen */
+        .upload-ui {
+            position: absolute; inset: 0;
+            background: var(--bg);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 10;
+        }
+
+        .upload-trigger {
+            padding: 40px;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .upload-trigger:active { background: var(--panel); border-color: var(--accent); }
+        .upload-trigger i { font-size: 3rem; margin-bottom: 15px; color: var(--border); }
+        .upload-trigger h3 { margin-bottom: 5px; font-size: 1.2rem; }
+        .upload-trigger p { color: var(--text-dim); font-size: 0.9rem; }
+
+        /* 4. CONTROLS (Bottom Bar) */
+        .controls {
+            height: 140px;
+            background: var(--panel);
+            border-top: 1px solid var(--border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 15px;
+            z-index: 20;
+        }
+
+        .control-label {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .scale-btn {
+            flex: 1;
+            max-width: 80px;
+            height: 50px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-dim);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .scale-btn:hover { border-color: var(--accent); color: var(--text); }
+        
+        .scale-btn.active {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
+
+        /* Resolution Badge */
+        .res-badge {
+            position: absolute;
+            top: 20px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+            pointer-events: none;
+            display: none;
+        }
+
+        /* Loading */
+        .loader {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.85);
+            display: none; align-items: center; justify-content: center;
+            flex-direction: column; gap: 15px; z-index: 50;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid var(--border);
+            border-top-color: var(--accent); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">INBONDZ</div>
+        <button class="save-btn" onclick="app.download()">Save HD</button>
+    </header>
+
+    <div class="workspace">
+        
+        <div class="upload-ui" id="uploadScreen">
+            <label class="upload-trigger">
+                <i class="fa-solid fa-image"></i>
+                <h3>Open Photo</h3>
+                <p>Tap to upload</p>
+                <input type="file" id="fileIn" accept="image/*" hidden onchange="app.load(this)">
+            </label>
+        </div>
+
+        <div class="res-badge" id="resDisplay">1080 x 1920</div>
+
+        <div class="canvas-container">
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <div style="font-weight:600; letter-spacing:1px;">ENHANCING...</div>
+        </div>
+
+    </div>
+
+    <div class="controls">
+        <div class="control-label">Upscale Resolution</div>
+        <div class="button-row">
+            <button class="scale-btn" onclick="app.enhance(2, this)">2x</button>
+            <button class="scale-btn" onclick="app.enhance(4, this)">4x</button>
+            <button class="scale-btn" onclick="app.enhance(6, this)">6x</button>
+            <button class="scale-btn" onclick="app.enhance(8, this)">8x</button>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            canvas: document.getElementById('canvas'),
+            ctx: null,
+            img: new Image(),
+            originalW: 0,
+            originalH: 0,
+
+            init: () => {
+                app.ctx = app.canvas.getContext('2d');
+            },
+
+            load: (input) => {
+                if(input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        app.img.src = e.target.result;
+                        app.img.onload = () => {
+                            document.getElementById('uploadScreen').style.display = 'none';
+                            app.originalW = app.img.width;
+                            app.originalH = app.img.height;
+                            // Default: 1x view (technically just fits screen)
+                            app.render(1, false); 
+                        }
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            },
+
+            // The Main Engine
+            enhance: (factor, btn) => {
+                if(!app.img.src) return alert("Open an image first.");
+
+                // 1. UI Updates
+                document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
+                if(btn) btn.classList.add('active');
+                
+                document.getElementById('loader').style.display = 'flex';
+
+                // 2. Allow UI to refresh before freezing for calculation
+                setTimeout(() => {
+                    app.render(factor, true); // true = apply sharpening
+                    document.getElementById('loader').style.display = 'none';
+                }, 50);
+            },
+
+            render: (scale, sharpen) => {
+                // Calculate New Dimensions
+                const newW = Math.floor(app.originalW * scale);
+                const newH = Math.floor(app.originalH * scale);
+
+                // Resize Canvas
+                app.canvas.width = newW;
+                app.canvas.height = newH;
+
+                // Update Resolution Badge
+                const badge = document.getElementById('resDisplay');
+                badge.style.display = 'block';
+                badge.innerText = `${newW} x ${newH} px`;
+
+                // Draw Basic Image (Scaled)
+                // 'quality' setting for smoothing
+                app.ctx.imageSmoothingEnabled = true;
+                app.ctx.imageSmoothingQuality = 'high';
+                app.ctx.drawImage(app.img, 0, 0, newW, newH);
+
+                // Apply "Enhance" Effect (Smart Sharpening)
+                // Only if scaling up, otherwise it looks too grainy on 1x
+                if(sharpen && scale > 1) {
+                    app.applySharpen(newW, newH);
+                }
+            },
+
+            // Pixel-Level Sharpening Convolution (The "Enhance" Trick)
+            applySharpen: (w, h) => {
+                const imgData = app.ctx.getImageData(0, 0, w, h);
+                const data = imgData.data;
+                const buff = new Uint8ClampedArray(data); // Copy of data
+                
+                // Sharpen Kernel (3x3)
+                // Improves edge contrast to fake higher resolution details
+                const kernel = [
+                    0, -1,  0,
+                   -1,  5, -1,
+                    0, -1,  0
+                ];
+                
+                // Note: Full convolution in JS is slow for 8x images. 
+                // We use a simplified optimized loop here for performance.
+                
+                const w4 = w * 4; // Row width in bytes
+                
+                // Loop excluding borders
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        const i = (y * w + x) * 4; // Current pixel index
+
+                        // Apply kernel to RGB
+                        for (let c = 0; c < 3; c++) {
+                            // Center pixel * 5 - (Sum of neighbors)
+                            const val = (
+                                buff[i + c] * 5 
+                                - buff[i + c - 4]     // Left
+                                - buff[i + c + 4]     // Right
+                                - buff[i + c - w4]    // Top
+                                - buff[i + c + w4]    // Bottom
+                            );
+                            data[i + c] = val;
+                        }
+                    }
+                }
+                
+                app.ctx.putImageData(imgData, 0, 0);
+            },
+
+            download: () => {
+                if(!app.img.src) return alert("Upload an image first.");
+                const link = document.createElement('a');
+                link.download = `Inbondz_Enhanced_${Date.now()}.png`;
+                // 1.0 quality PNG for lossless saving
+                link.href = app.canvas.toDataURL('image/png', 1.0);
+                link.click();
+            }
+        };
+
+        app.init();
+    </script>
+</body>
+</html>
