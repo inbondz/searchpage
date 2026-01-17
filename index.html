@@ -1,1 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inbondz Enhancer</title>
+    
+    <style>
+        /* =========================================
+           1. CORE DESIGN SYSTEM (Auto-Theme)
+           ========================================= */
+        :root {
+            --brand: #9EA3A3;
+            --brand-active: #ffffff;
+            
+            /* Dark Mode (Default) */
+            --bg: #000000;
+            --surface: #121212;
+            --border: #222222;
+            --text: #ffffff;
+            --text-sub: #888888;
+            --thumb: #ffffff;
+        }
 
+        /* Light Mode Override */
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg: #f0f0f0;
+                --surface: #ffffff;
+                --border: #e0e0e0;
+                --text: #111111;
+                --text-sub: #666666;
+                --thumb: #333333;
+                --brand-active: #333333;
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        /* =========================================
+           2. HEADER (Minimal)
+           ========================================= */
+        header {
+            height: 60px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .brand {
+            font-weight: 900; font-size: 1.1rem; letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .btn-export {
+            background: var(--text); color: var(--bg);
+            border: none; padding: 8px 20px; border-radius: 50px;
+            font-weight: 700; font-size: 0.9rem; cursor: pointer;
+        }
+
+        /* =========================================
+           3. WORKSPACE (Canvas Area)
+           ========================================= */
+        .workspace {
+            flex: 1; position: relative;
+            background: var(--bg);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        canvas {
+            max-width: 100%; max-height: 100%;
+            object-fit: contain;
+            transition: 0.1s filter; /* Smooth adjustments */
+        }
+
+        /* UPLOAD OVERLAY */
+        .upload-screen {
+            position: absolute; inset: 0; z-index: 10;
+            background: var(--bg);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        
+        .upload-btn {
+            padding: 20px 40px; border: 2px dashed var(--border);
+            border-radius: 16px; text-align: center; cursor: pointer;
+            transition: 0.2s; max-width: 80%;
+        }
+        .upload-btn:active { background: var(--surface); border-color: var(--brand); }
+        
+        .upload-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 5px; }
+        .upload-sub { color: var(--text-sub); font-size: 0.9rem; }
+
+        /* COMPARE BUTTON (Floating) */
+        .compare-pill {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.6); color: white; border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(4px); padding: 8px 24px; border-radius: 30px;
+            font-size: 0.8rem; font-weight: 700; z-index: 20; display: none;
+            pointer-events: auto;
+        }
+        .compare-pill:active { background: var(--brand); color: black; }
+
+        /* =========================================
+           4. CONTROLS (Bottom Sheet)
+           ========================================= */
+        .controls {
+            flex-shrink: 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 20px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            display: flex; flex-direction: column; gap: 20px;
+            z-index: 50;
+        }
+
+        .slider-row {
+            display: flex; flex-direction: column; gap: 8px;
+        }
+
+        .slider-header {
+            display: flex; justify-content: space-between;
+            font-size: 0.9rem; font-weight: 600;
+        }
+        .val-disp { font-family: monospace; color: var(--brand); }
+
+        /* THICK TOUCH SLIDERS */
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent; padding: 10px 0;
+        }
+        input[type=range]:focus { outline: none; }
+
+        /* Track */
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer;
+            background: var(--border); border-radius: 2px;
+        }
+        
+        /* Thumb (Big for Fingers) */
+        input[type=range]::-webkit-slider-thumb {
+            height: 24px; width: 24px; border-radius: 50%;
+            background: var(--thumb); cursor: pointer;
+            -webkit-appearance: none; margin-top: -10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        /* DESKTOP LAYOUT (Media Query) */
+        @media (min-width: 800px) {
+            body { flex-direction: row; }
+            header { position: absolute; top: 0; left: 0; width: 100%; background: transparent; border: none; }
+            .workspace { height: 100vh; padding-top: 60px; }
+            .controls {
+                width: 350px; height: 100vh; border-top: none; border-left: 1px solid var(--border);
+                justify-content: center;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <svg style="display: none;">
+        <defs>
+            <filter id="sharpFilter">
+                <feConvolveMatrix order="3" preserveAlpha="true" kernelMatrix="0 -1 0 -1 5 -1 0 -1 0"/>
+            </filter>
+        </defs>
+    </svg>
+
+    <header>
+        <div class="brand">INBONDZ</div>
+        <button class="btn-export" onclick="app.export()">Save HD</button>
+    </header>
+
+    <div class="workspace">
+        
+        <div class="upload-screen" id="uploadUI">
+            <label class="upload-btn">
+                <div class="upload-title">Tap to Open Photo</div>
+                <div class="upload-sub">Supports 4K / RAW</div>
+                <input type="file" id="fileIn" accept="image/*" hidden onchange="app.load(this)">
+            </label>
+        </div>
+
+        <canvas id="canvas"></canvas>
+        
+        <div class="compare-pill" id="compare" 
+             onmousedown="app.compare(true)" onmouseup="app.compare(false)"
+             ontouchstart="app.compare(true)" ontouchend="app.compare(false)">
+            HOLD TO COMPARE
+        </div>
+    </div>
+
+    <div class="controls">
+        
+        <div class="slider-row">
+            <div class="slider-header"><span>Exposure</span><span class="val-disp" id="l-bri">0</span></div>
+            <input type="range" id="bri" min="-50" max="50" value="0" oninput="app.process()">
+        </div>
+
+        <div class="slider-row">
+            <div class="slider-header"><span>Contrast (10x)</span><span class="val-disp" id="l-con">0</span></div>
+            <input type="range" id="con" min="-50" max="100" value="0" oninput="app.process()">
+        </div>
+
+        <div class="slider-row">
+            <div class="slider-header"><span>Vibrance (10x)</span><span class="val-disp" id="l-sat">0</span></div>
+            <input type="range" id="sat" min="-50" max="150" value="0" oninput="app.process()">
+        </div>
+
+        <div class="slider-row">
+            <div class="slider-header"><span>Sharpness (Details)</span><span class="val-disp" id="l-shp">0</span></div>
+            <input type="range" id="shp" min="0" max="100" value="0" oninput="app.process()">
+        </div>
+
+    </div>
+
+    <script>
+        const app = {
+            canvas: document.getElementById('canvas'),
+            ctx: null,
+            img: new Image(),
+            
+            init: () => {
+                app.ctx = app.canvas.getContext('2d');
+            },
+
+            load: (input) => {
+                if(input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        app.img.src = e.target.result;
+                        app.img.onload = () => {
+                            document.getElementById('uploadUI').style.display = 'none';
+                            document.getElementById('compare').style.display = 'block';
+                            app.fitCanvas();
+                            app.process();
+                        }
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            },
+
+            fitCanvas: () => {
+                // Resize internal canvas resolution to match image
+                // But cap it at 4000px to prevent mobile crashes
+                const max = 4000;
+                let w = app.img.width;
+                let h = app.img.height;
+                
+                if (w > max || h > max) {
+                    const ratio = w/h;
+                    if (w > h) { w = max; h = max/ratio; }
+                    else { h = max; w = max*ratio; }
+                }
+
+                app.canvas.width = w;
+                app.canvas.height = h;
+            },
+
+            process: () => {
+                if(!app.img.src) return;
+
+                // 1. Get Values
+                const bri = parseInt(document.getElementById('bri').value);
+                const con = parseInt(document.getElementById('con').value);
+                const sat = parseInt(document.getElementById('sat').value);
+                const shp = parseInt(document.getElementById('shp').value);
+
+                // 2. Update Labels
+                document.getElementById('l-bri').innerText = bri;
+                document.getElementById('l-con').innerText = con;
+                document.getElementById('l-sat').innerText = sat;
+                document.getElementById('l-shp').innerText = shp;
+
+                // 3. Mathematical Mapping (The "10x" Logic)
+                // CSS filters use % where 100% is normal.
+                const cBri = 100 + bri; 
+                const cCon = 100 + con; // Up to 200% contrast
+                const cSat = 100 + sat; // Up to 250% saturation
+
+                // 4. Build Filter String
+                let filter = `brightness(${cBri}%) contrast(${cCon}%) saturate(${cSat}%)`;
+                
+                // Add Sharpness via SVG Filter (if value > 0)
+                if(shp > 0) filter += ` url(#sharpFilter)`;
+
+                // 5. Render
+                app.ctx.filter = filter;
+                app.ctx.clearRect(0,0, app.canvas.width, app.canvas.height);
+                app.ctx.drawImage(app.img, 0, 0, app.canvas.width, app.canvas.height);
+            },
+
+            compare: (isActive) => {
+                if(!app.img.src) return;
+                
+                if(isActive) {
+                    // Draw RAW image
+                    app.ctx.filter = 'none';
+                    app.ctx.drawImage(app.img, 0, 0, app.canvas.width, app.canvas.height);
+                    
+                    // Add "Original" Text
+                    app.ctx.font = "bold 50px Arial";
+                    app.ctx.fillStyle = "rgba(255,255,255,0.8)";
+                    app.ctx.fillText("ORIGINAL", 30, 70);
+                } else {
+                    app.process(); // Re-apply filters
+                }
+            },
+
+            export: () => {
+                if(!app.img.src) return alert("Please open an image first.");
+                const link = document.createElement('a');
+                link.download = `Inbondz_${Date.now()}.jpg`;
+                link.href = app.canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+            }
+        };
+
+        app.init();
+    </script>
+</body>
+</html>
